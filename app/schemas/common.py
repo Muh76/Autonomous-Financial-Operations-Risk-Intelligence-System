@@ -33,3 +33,5 @@ class ErrorResponse(BaseResponse):
 class HealthResponse(BaseResponse):
     status: str
     environment: str
+    database: str
+    redis: str

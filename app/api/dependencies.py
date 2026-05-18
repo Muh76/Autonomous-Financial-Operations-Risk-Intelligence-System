@@ -1,7 +1,9 @@
 from typing import Annotated
 
 from fastapi import Depends, Request
+from redis.asyncio import Redis
 
+from app.cache.redis import get_redis
 from app.core.config import Settings, get_settings
 from app.services.evaluation import EvaluationService
 from app.services.patients import PatientService
@@ -29,6 +31,7 @@ def get_evaluation_service() -> EvaluationService:
 
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 RequestIdDep = Annotated[str, Depends(get_request_id)]
+RedisDep = Annotated[Redis, Depends(get_redis)]
 PatientServiceDep = Annotated[PatientService, Depends(get_patient_service)]
 SafetyServiceDep = Annotated[SafetyService, Depends(get_safety_service)]
 EvaluationServiceDep = Annotated[EvaluationService, Depends(get_evaluation_service)]

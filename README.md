@@ -2,14 +2,14 @@
 
 Production-style backend starter for an AI-assisted financial operations and risk intelligence platform.
 
-The project currently includes an async FastAPI API, Docker Compose infrastructure, PostgreSQL and Redis wiring, structured logging, typed settings, and a minimal LangGraph financial investigation workflow.
+The project currently includes an async FastAPI API, Docker Compose infrastructure, async PostgreSQL integration, async Redis integration, structured logging, typed settings, and a minimal LangGraph financial investigation workflow.
 
 ## Stack
 
 - FastAPI for the async HTTP API
 - LangGraph and LangChain for workflow orchestration and future AI agents
 - PostgreSQL with async SQLAlchemy and `asyncpg`
-- Redis for cache, locks, and transient workflow state
+- Redis for cache, workflow state, and investigation memory
 - Docker Compose for local development infrastructure
 - Pydantic Settings for centralized configuration
 - Structlog for structured JSON logging
@@ -26,6 +26,8 @@ API health check:
 ```bash
 curl http://localhost:8000/health
 ```
+
+The health response reports API status plus PostgreSQL and Redis availability.
 
 Interactive API docs are available locally at:
 
@@ -55,25 +57,53 @@ State fields:
 - `escalation_level`
 - `workflow_history`
 
-Run the example:
+Run the workflow example:
 
 ```bash
 python examples/run_investigation_workflow.py
+```
+
+## PostgreSQL Integration
+
+The database layer lives in `app/db/session.py` and provides:
+
+- async SQLAlchemy engine setup
+- pool configuration through environment variables
+- `async_sessionmaker`
+- `get_db_session()` for FastAPI dependency injection
+- `check_database_connection()` using `SELECT 1`
+- graceful engine disposal during application shutdown
+
+## Redis Integration
+
+The Redis layer lives in `app/cache/redis.py` and provides:
+
+- async Redis connection pool
+- `get_redis()` for FastAPI dependency injection
+- `check_redis_connection()` health helper
+- graceful pool shutdown during application shutdown
+- `RedisStore` helper for JSON cache values, workflow history, and investigation memory
+
+Run the Redis usage example after starting Redis:
+
+```bash
+python examples/redis_usage.py
 ```
 
 ## Project Layout
 
 ```text
 app/
-├── api/              # route registration, dependency aliases, error handling
-├── core/             # config, logging, middleware, lifespan, graph workflow
-├── db/               # async SQLAlchemy session setup
-├── integrations/     # external system clients
-├── models/           # ORM models
-├── repositories/     # persistence boundaries
-├── schemas/          # Pydantic request and response models
-├── services/         # application service layer
-└── tasks/            # background and scheduled jobs
+|-- api/              # route registration, dependency aliases, error handling
+|-- cache/            # async Redis client and cache/state helpers
+|-- core/             # config, logging, middleware, lifespan, graph workflow
+|-- db/               # async SQLAlchemy session setup
+|-- integrations/     # external system clients
+|-- models/           # ORM models
+|-- repositories/     # persistence boundaries
+|-- schemas/          # Pydantic request and response models
+|-- services/         # application service layer
+`-- tasks/            # background and scheduled jobs
 ```
 
 ## Local Development

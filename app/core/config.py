@@ -9,7 +9,14 @@ class Settings(BaseSettings):
     app_env: str = "local"
     api_v1_prefix: str = "/api/v1"
     database_url: str = "postgresql+asyncpg://finance:finance@localhost:5432/finance_ops"
+    database_pool_size: int = 5
+    database_max_overflow: int = 10
+    database_pool_timeout: int = 30
+    database_pool_recycle: int = 1800
     redis_url: str = "redis://localhost:6379/0"
+    redis_max_connections: int = 20
+    redis_socket_timeout: float = 5.0
+    redis_health_check_interval: int = 30
     log_level: str = "INFO"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
