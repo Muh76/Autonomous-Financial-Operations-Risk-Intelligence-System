@@ -1,14 +1,15 @@
-from typing import Literal, TypedDict
+from operator import add
+from typing import Annotated, Literal, NotRequired, TypedDict
 
 
-RiskLevel = Literal["low", "medium", "high", "critical"]
+EscalationLevel = Literal["none", "review", "escalate", "block"]
 
 
-class RiskWorkflowState(TypedDict):
-    """State passed between risk intelligence workflow nodes."""
+class InvestigationState(TypedDict):
+    """Shared state for a financial transaction investigation workflow."""
 
-    operation_id: str
-    amount: float
-    currency: str
-    risk_level: RiskLevel | None
-    decision: str | None
+    transaction_id: str
+    findings: Annotated[list[str], add]
+    risk_score: NotRequired[int]
+    escalation_level: NotRequired[EscalationLevel]
+    workflow_history: Annotated[list[str], add]

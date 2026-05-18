@@ -1,0 +1,24 @@
+# Web API
+fastapi>=0.115.0,<1.0.0
+uvicorn[standard]>=0.30.0,<1.0.0
+
+# Configuration and validation
+pydantic-settings>=2.4.0,<3.0.0
+python-dotenv>=1.0.1,<2.0.0
+
+# AI orchestration and model integrations
+langgraph>=1.0.0,<2.0.0
+langchain>=1.0.0,<2.0.0
+langchain-openai>=1.0.0,<2.0.0
+
+# Persistence
+sqlalchemy[asyncio]>=2.0.0,<3.0.0
+asyncpg>=0.29.0,<1.0.0
+psycopg2-binary>=2.9.9,<3.0.0
+
+# Cache and external I/O
+redis>=5.0.0,<8.0.0
+httpx>=0.27.0,<1.0.0
+
+# Observability
+structlog>=24.0.0,<26.0.0

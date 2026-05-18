@@ -1,15 +1,20 @@
 FROM python:3.11-slim AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
 
-COPY pyproject.toml README.md ./
+RUN addgroup --system app && adduser --system --ingroup app app
+
+COPY requirements.txt ./
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir .
+    && pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
+
+USER app
 
 EXPOSE 8000
 

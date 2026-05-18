@@ -13,7 +13,7 @@ def create_app() -> FastAPI:
 
     application = FastAPI(
         title=settings.app_name,
-        version="0.1.0",
+        version=settings.app_version,
         lifespan=lifespan,
         docs_url="/docs" if settings.is_local else None,
         redoc_url="/redoc" if settings.is_local else None,
