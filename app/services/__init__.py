@@ -1,1 +1,1 @@
-"""Business use cases and orchestration boundaries."""
+"""Application service layer."""

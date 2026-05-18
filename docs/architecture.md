@@ -1,106 +1,97 @@
 # Backend Architecture
 
-## 1. Recommended Folder Structure
+## Project Structure
 
 ```text
 .
 ├── app/
-│   ├── api/                 # FastAPI routers and versioned HTTP endpoints
-│   ├── agents/              # LangGraph state, graphs, and future agent nodes
-│   ├── cache/               # Redis clients, cache helpers, distributed locks
-│   ├── core/                # Settings, logging, security, common app primitives
-│   ├── db/                  # SQLAlchemy engine/session and database lifecycle
-│   ├── integrations/        # External financial systems and third-party clients
-│   ├── models/              # ORM models
-│   ├── observability/       # Health checks, metrics, tracing, audit hooks
-│   ├── repositories/        # Persistence adapters and query boundaries
-│   ├── schemas/             # Pydantic request/response contracts
-│   ├── services/            # Business use cases and orchestration boundaries
-│   └── tasks/               # Background jobs and scheduled workflows
-├── docs/                    # Architecture and operating notes
-├── docker-compose.yml       # Local API, PostgreSQL, Redis stack
-├── Dockerfile               # API image
-├── pyproject.toml           # Python dependencies and tooling config
-└── .env.example             # Local environment template
+│   ├── api/
+│   │   ├── routes/
+│   │   └── v1/
+│   │       └── routes/
+│   ├── core/
+│   │   └── graph/
+│   ├── db/
+│   ├── integrations/
+│   ├── models/
+│   ├── repositories/
+│   ├── schemas/
+│   ├── services/
+│   └── tasks/
+├── docker-compose.yml
+├── Dockerfile
+├── pyproject.toml
+└── README.md
 ```
 
-## 2. Folder Responsibilities
+## Responsibilities
 
-- `app/api`: HTTP boundary only. It validates requests, calls services, and returns response schemas.
-- `app/services`: Application use cases. This is where endpoint intent becomes business behavior.
-- `app/agents`: LangGraph orchestration. Keep graph state typed and node functions small.
-- `app/schemas`: Pydantic API contracts. These should be stable and explicit.
-- `app/models`: SQLAlchemy persistence models.
-- `app/repositories`: Database access layer. Services depend on repositories instead of raw queries.
-- `app/db`: Async database engine/session setup and future migration hooks.
-- `app/cache`: Redis connection and future cache/state abstractions.
-- `app/integrations`: Clients for ERP, banking, payment, KYC, market data, notification, and document systems.
-- `app/core`: Cross-cutting configuration, logging, security, and app-level dependencies.
-- `app/observability`: Health, metrics, tracing, structured logging, and audit-ready instrumentation.
-- `app/tasks`: Background processing entrypoints for long-running analysis, reconciliation, and alerting.
+- `app/main.py`: FastAPI application factory and router registration.
+- `app/api`: HTTP routing boundary, dependency aliases, and exception handlers.
+- `app/api/routes`: Non-versioned platform routes such as `/health`.
+- `app/api/v1/router.py`: Aggregates all versioned API modules under `/api/v1`.
+- `app/api/v1/routes`: Versioned endpoint modules.
+- `app/core/config.py`: Pydantic settings loaded from environment variables.
+- `app/core/logging.py`: Structured logging configuration.
+- `app/core/lifespan.py`: Startup and shutdown lifecycle hooks.
+- `app/core/middleware.py`: Request middleware registration, currently request ID propagation.
+- `app/core/graph`: Typed LangGraph state and workflow definition.
+- `app/db/session.py`: Async SQLAlchemy engine and session dependency.
+- `app/models`: SQLAlchemy models.
+- `app/repositories`: Persistence adapters.
+- `app/schemas`: Pydantic request, response, and error contracts.
+- `app/services`: Application use cases separated from HTTP transport.
+- `app/integrations`: External system clients.
+- `app/tasks`: Background and scheduled jobs.
 
-## 3. Recommended Backend Architecture
+## Architecture
 
-Use a layered backend:
+The backend follows a small layered structure:
 
 ```text
-HTTP API -> Services -> Agents / Repositories / Integrations -> PostgreSQL / Redis / External Systems
+FastAPI routes -> dependencies -> services -> graph/repositories/integrations -> PostgreSQL/Redis/external systems
 ```
 
-The FastAPI layer should stay thin. Services own use-case orchestration, such as analyzing an operation, assessing counterparty exposure, or triggering a review workflow. LangGraph should coordinate multi-step reasoning and decision workflows while keeping deterministic business rules in normal Python services.
+Routes stay thin: they validate input, resolve dependencies, call services, and return typed response envelopes. Services own application behavior. Repositories will own persistence. Integrations will own external system calls. LangGraph workflows live under `core/graph` until domain-specific agent packages are justified.
 
-State should be typed at graph boundaries. The scaffold uses `FinancialOperationState` as a `TypedDict`, which can later evolve into stricter Pydantic state objects if persistence, validation, or schema versioning becomes necessary.
+Current routes:
 
-For future multi-agent support, keep each graph node focused on one responsibility:
+- `GET /health`
+- `GET /api/v1/patients`
+- `POST /api/v1/patients`
+- `POST /api/v1/safety`
+- `POST /api/v1/evaluation`
 
-- context enrichment
-- risk classification
-- policy validation
-- anomaly detection
-- recommendation generation
-- human approval routing
+## Why Routing Structure Matters
 
-Avoid turning agents into repositories or API clients. Agent nodes may call tools, but persistence and external integration should still sit behind service/repository/client interfaces.
+Non-versioned routes are reserved for platform concerns that should not change with business API versions, such as health checks. Domain routes sit under `/api/v1` so future breaking changes can be introduced as `/api/v2` without disturbing existing clients.
 
-## 4. Infrastructure Overview
+Each domain has its own route module. This keeps patient, safety, and evaluation concerns independent while still giving the application one top-level router to register.
 
-Local infrastructure runs through Docker Compose:
+## Infrastructure
+
+Docker Compose starts:
 
 - `api`: FastAPI application served by Uvicorn.
-- `postgres`: durable relational store for operations, assessments, audit records, graph checkpoints, and configuration.
-- `redis`: cache, transient workflow state, idempotency keys, rate limits, and lightweight distributed locks.
+- `postgres`: PostgreSQL for durable platform data.
+- `redis`: Redis for cache, locks, rate limits, and transient workflow state.
 
-Production can map this cleanly to:
-
-- containerized API services behind a load balancer
-- managed PostgreSQL with backups and read replicas where needed
-- managed Redis with persistence configured according to workflow needs
-- OpenTelemetry collector for traces and metrics
-- centralized structured log ingestion
-- secret manager for credentials
-
-## 5. Service Interaction Flow
-
-Example operation analysis flow:
+## Service Flow
 
 ```text
-Client
-  -> POST /api/v1/operations/analyze
-  -> FastAPI route validates OperationRequest
-  -> OperationsService creates typed graph state
-  -> LangGraph enrich_context node prepares context
-  -> LangGraph assess_risk node classifies initial risk
-  -> LangGraph recommend_actions node prepares next actions
-  -> Service maps graph result to OperationResponse
-  -> Client receives risk level, findings, and recommendations
+Client -> FastAPI route -> typed Python boundary -> async service/workflow -> response
 ```
 
-In a fuller production version, the service would also:
+## Scaling Toward AI Agents
 
-- load account, transaction, policy, and counterparty data through repositories and integrations
-- cache repeated reference data in Redis
-- persist the workflow request, decision trail, and audit events in PostgreSQL
-- emit trace spans and structured logs around each graph node
-- enqueue long-running or human-in-the-loop workflows through `app/tasks`
+This structure scales cleanly for AI agent workflows because agents do not need to leak into route code. A future route can call a service, the service can invoke a LangGraph workflow, and graph nodes can use repositories or integrations through explicit interfaces.
 
-The current implementation is intentionally minimal: it establishes the architecture, async boundaries, typed state, and service flow without pretending the domain model is complete.
+As the platform grows:
+
+- patient routes can remain focused on patient-facing API operations
+- safety routes can call deterministic policy services and graph-based risk workflows
+- evaluation routes can run offline or online AI quality checks
+- agent state can stay typed in `core/graph/state.py`
+- long-running workflows can move into `tasks`
+
+The result is an API that can support AI orchestration without becoming an API-shaped prompt runner.

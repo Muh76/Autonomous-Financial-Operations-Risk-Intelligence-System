@@ -21,7 +21,7 @@ docker compose up --build
 API health check:
 
 ```bash
-curl http://localhost:8000/health
+curl http://localhost:8000/api/v1/health
 ```
 
 See [docs/architecture.md](docs/architecture.md) for the architecture, folder responsibilities, infrastructure overview, and service flow.

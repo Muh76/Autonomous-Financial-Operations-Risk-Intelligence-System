@@ -1,9 +1,11 @@
 from fastapi import FastAPI
 
 from app.api.router import api_router
+from app.api.errors import register_exception_handlers
 from app.core.config import settings
+from app.core.lifespan import lifespan
 from app.core.logging import configure_logging
-from app.observability.health import router as health_router
+from app.core.middleware import register_middleware
 
 
 def create_app() -> FastAPI:
@@ -12,11 +14,13 @@ def create_app() -> FastAPI:
     application = FastAPI(
         title=settings.app_name,
         version="0.1.0",
+        lifespan=lifespan,
         docs_url="/docs" if settings.is_local else None,
         redoc_url="/redoc" if settings.is_local else None,
     )
-    application.include_router(health_router)
-    application.include_router(api_router, prefix=settings.api_v1_prefix)
+    register_middleware(application)
+    register_exception_handlers(application)
+    application.include_router(api_router)
     return application
 
 
