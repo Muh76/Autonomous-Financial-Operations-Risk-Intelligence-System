@@ -1,41 +1,166 @@
 # Autonomous Financial Operations & Risk Intelligence Platform
 
-Production-style backend starter for an AI-assisted financial operations and risk intelligence platform.
+Backend foundation for an enterprise AI system that supports financial operations review, transaction investigation, safety checks, and evaluation workflows.
 
-The project currently includes an async FastAPI API, Docker Compose infrastructure, async PostgreSQL integration, async Redis integration, structured logging, typed settings, and a minimal LangGraph financial investigation workflow.
+The current codebase is an initial production-style backend scaffold. It focuses on clean service boundaries, async infrastructure, typed workflow state, health reporting, and local operability. Domain models and production business rules are intentionally minimal at this stage.
 
-## Stack
+## Project Vision
 
-- FastAPI for the async HTTP API
-- LangGraph and LangChain for workflow orchestration and future AI agents
-- PostgreSQL with async SQLAlchemy and `asyncpg`
-- Redis for cache, workflow state, and investigation memory
-- Docker Compose for local development infrastructure
-- Pydantic Settings for centralized configuration
-- Structlog for structured JSON logging
+The platform is intended to become a backend system for autonomous and human-supervised financial operations intelligence. Its long-term purpose is to help teams inspect transactions, identify operational and risk signals, coordinate investigation workflows, and maintain auditable decision trails.
 
-## Quick Start
+Core engineering goals:
+
+- provide a reliable async API layer for operational workflows
+- support future multi-agent investigation and risk workflows
+- persist operational data and audit records in PostgreSQL
+- use Redis for cache, transient workflow state, and investigation memory
+- expose production-grade health and structured logging from the start
+- keep domain logic separated from transport, persistence, and orchestration concerns
+
+## Architecture Overview
+
+The backend follows a layered architecture:
+
+```text
+Client
+  -> FastAPI routes
+  -> dependency injection
+  -> service layer
+  -> LangGraph workflows / repositories / integrations
+  -> PostgreSQL / Redis / external systems
+```
+
+Current architecture components:
+
+- FastAPI app factory with lifespan startup and shutdown handlers
+- versioned API routing under `/api/v1`
+- non-versioned platform health endpoint at `/health`
+- centralized Pydantic settings
+- structured logging with request context binding
+- async SQLAlchemy database integration
+- async Redis integration
+- typed LangGraph investigation workflow
+- Docker Compose for local API, PostgreSQL, and Redis
+
+## Tech Stack
+
+- Python 3.11+
+- FastAPI
+- Uvicorn
+- Pydantic Settings
+- SQLAlchemy asyncio
+- asyncpg
+- PostgreSQL
+- Redis asyncio client
+- LangGraph
+- LangChain
+- Structlog
+- Docker Compose
+
+## Folder Structure
+
+```text
+app/
+|-- api/
+|   |-- routes/          # non-versioned platform routes such as /health
+|   |-- v1/              # versioned API router and domain endpoints
+|   |-- dependencies.py  # FastAPI dependency aliases
+|   |-- errors.py        # centralized exception handlers
+|   `-- router.py        # top-level API router registration
+|-- cache/               # Redis client, healthcheck, cache/state helpers
+|-- core/
+|   |-- graph/           # LangGraph state, nodes, and workflow assembly
+|   |-- config.py        # environment-driven settings
+|   |-- health.py        # dependency healthcheck orchestration
+|   |-- lifespan.py      # startup/shutdown lifecycle
+|   |-- logging.py       # structlog configuration and logger utility
+|   `-- middleware.py    # request tracing middleware
+|-- db/                  # async SQLAlchemy engine and session management
+|-- integrations/        # future external systems and vendor clients
+|-- models/              # future SQLAlchemy ORM models
+|-- repositories/        # future persistence boundaries
+|-- schemas/             # Pydantic request and response models
+|-- services/            # application service layer
+`-- tasks/               # future background jobs and scheduled workflows
+```
+
+Additional project files:
+
+```text
+examples/                # runnable examples for workflow, Redis, and logging
+docs/                    # architecture notes
+Dockerfile               # backend container image
+docker-compose.yml       # local API/PostgreSQL/Redis stack
+requirements.txt         # minimal direct runtime dependencies
+.env.example             # local environment template
+```
+
+## Local Setup
+
+Create a virtual environment:
+
+```bash
+python -m venv .venv
+```
+
+Activate it on Windows PowerShell:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Create a local environment file:
+
+```bash
+cp .env.example .env
+```
+
+Run the API:
+
+```bash
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Open the API docs:
+
+```text
+http://localhost:8000/docs
+```
+
+## Docker Usage
+
+Start the full local stack:
 
 ```bash
 cp .env.example .env
 docker compose up --build
 ```
 
-API health check:
+Services:
+
+- `aforis-api`: FastAPI backend on port `8000`
+- `aforis-postgres`: PostgreSQL database
+- `aforis-redis`: Redis cache/state store
+
+Stop the stack:
 
 ```bash
-curl http://localhost:8000/health
+docker compose down
 ```
 
-The health response reports API status plus PostgreSQL and Redis availability.
+Remove local volumes when a clean database/cache is needed:
 
-Interactive API docs are available locally at:
-
-```text
-http://localhost:8000/docs
+```bash
+docker compose down -v
 ```
 
-## Current API Routes
+## API Routes
 
 ```text
 GET  /health
@@ -45,11 +170,43 @@ POST /api/v1/safety
 POST /api/v1/evaluation
 ```
 
-## LangGraph Investigation Workflow
+## Healthcheck System
 
-The starter workflow lives in `app/core/graph` and uses a typed investigation state with reducer-based list updates for scalable future agent nodes.
+The `/health` endpoint returns an enterprise-style component response.
 
-State fields:
+It validates:
+
+- FastAPI application readiness
+- PostgreSQL connectivity
+- Redis connectivity
+- LangGraph workflow initialization
+
+Example shape:
+
+```json
+{
+  "success": true,
+  "request_id": "request-id",
+  "status": "degraded",
+  "environment": "local",
+  "version": "0.1.0",
+  "components": {
+    "app": {
+      "status": "ok",
+      "latency_ms": 0.01,
+      "detail": "FastAPI application is ready"
+    }
+  }
+}
+```
+
+When PostgreSQL or Redis are unavailable in local development, the endpoint reports `degraded` instead of crashing.
+
+## Workflow Overview
+
+The initial LangGraph workflow is a financial investigation workflow located in `app/core/graph`.
+
+Current workflow state:
 
 - `transaction_id`
 - `findings`
@@ -57,68 +214,125 @@ State fields:
 - `escalation_level`
 - `workflow_history`
 
+Current node:
+
+- `transaction_analysis_node`
+
 Run the workflow example:
 
 ```bash
 python examples/run_investigation_workflow.py
 ```
 
-## PostgreSQL Integration
+The workflow uses typed state and reducer-based list updates so future nodes and agents can append findings and history without overwriting prior state.
 
-The database layer lives in `app/db/session.py` and provides:
+## Logging and Observability
 
-- async SQLAlchemy engine setup
-- pool configuration through environment variables
-- `async_sessionmaker`
-- `get_db_session()` for FastAPI dependency injection
-- `check_database_connection()` using `SELECT 1`
-- graceful engine disposal during application shutdown
+Structured logging is configured with `structlog`.
 
-## Redis Integration
+Current support:
 
-The Redis layer lives in `app/cache/redis.py` and provides:
+- JSON logs in production-style environments
+- readable console logs for local development
+- request ID propagation through `X-Request-ID`
+- request context binding for method, path, and client host
+- request start, completion, failure, and duration logs
 
-- async Redis connection pool
-- `get_redis()` for FastAPI dependency injection
-- `check_redis_connection()` health helper
-- graceful pool shutdown during application shutdown
-- `RedisStore` helper for JSON cache values, workflow history, and investigation memory
+Run the logging example:
 
-Run the Redis usage example after starting Redis:
+```bash
+python examples/logging_usage.py
+```
+
+This structure is ready for future OpenTelemetry, centralized log ingestion, and trace correlation.
+
+## Redis Usage
+
+Redis is integrated through `app/cache/redis.py`.
+
+Current support:
+
+- async connection pool
+- FastAPI dependency injection
+- healthcheck helper
+- JSON cache helper
+- workflow history helper
+
+Run the Redis example after starting Redis:
 
 ```bash
 python examples/redis_usage.py
 ```
 
-## Project Layout
+## Roadmap
 
-```text
-app/
-|-- api/              # route registration, dependency aliases, error handling
-|-- cache/            # async Redis client and cache/state helpers
-|-- core/             # config, logging, middleware, lifespan, graph workflow
-|-- db/               # async SQLAlchemy session setup
-|-- integrations/     # external system clients
-|-- models/           # ORM models
-|-- repositories/     # persistence boundaries
-|-- schemas/          # Pydantic request and response models
-|-- services/         # application service layer
-`-- tasks/            # background and scheduled jobs
-```
+Near-term backend work:
 
-## Local Development
+- add SQLAlchemy base model and initial domain models
+- add Alembic migrations
+- implement repository interfaces for patients, transactions, investigations, and evaluations
+- connect services to PostgreSQL persistence
+- add test suite with async database and Redis fixtures
+- add CI checks for formatting, typing, tests, and container build
 
-Install dependencies without Docker:
+AI workflow work:
 
-```bash
-pip install -r requirements.txt
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
+- expand investigation workflow with risk signal extraction
+- add policy and compliance review nodes
+- add human escalation and approval state
+- persist workflow runs and decision trails
+- introduce agent/tool interfaces for external data retrieval
 
-Docker services:
+Operational work:
 
-- `aforis-api`
-- `aforis-postgres`
-- `aforis-redis`
+- add OpenTelemetry tracing
+- add metrics endpoint
+- add authentication and authorization
+- add rate limiting and idempotency keys
+- add production deployment manifests
 
-See [docs/architecture.md](docs/architecture.md) for folder responsibilities, routing structure, infrastructure overview, and how the backend scales toward multi-agent workflows.
+## Future Phases
+
+Phase 1: Backend Foundation
+
+- API structure
+- configuration
+- healthchecks
+- logging
+- PostgreSQL and Redis connectivity
+- minimal LangGraph workflow
+
+Phase 2: Domain Persistence
+
+- transaction, patient, investigation, and evaluation models
+- migrations
+- repositories
+- audit records
+
+Phase 3: Risk Intelligence Workflows
+
+- richer LangGraph workflows
+- deterministic policy checks
+- risk scoring services
+- workflow state persistence
+- investigation memory
+
+Phase 4: Multi-Agent Operations
+
+- specialized investigation agents
+- safety and evaluation agents
+- tool calling interfaces
+- human-in-the-loop escalation
+- traceable agent decisions
+
+Phase 5: Production Operations
+
+- authentication and tenant isolation
+- observability dashboards
+- deployment automation
+- security hardening
+- performance and resilience testing
+
+## Current Status
+
+This repository is an early backend foundation. It is structured to support production growth, but the domain behavior is intentionally minimal until financial operation requirements, data contracts, and governance rules are defined.

@@ -1,8 +1,9 @@
-from typing import Generic, TypeVar
+from typing import Generic, Literal, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
 DataT = TypeVar("DataT")
+HealthStatus = Literal["ok", "degraded", "failed"]
 
 
 class ApiModel(BaseModel):
@@ -30,8 +31,14 @@ class ErrorResponse(BaseResponse):
     details: list[ErrorDetail] = Field(default_factory=list)
 
 
+class HealthComponent(ApiModel):
+    status: HealthStatus
+    latency_ms: float
+    detail: str | None = None
+
+
 class HealthResponse(BaseResponse):
-    status: str
+    status: HealthStatus
     environment: str
-    database: str
-    redis: str
+    version: str
+    components: dict[str, HealthComponent]

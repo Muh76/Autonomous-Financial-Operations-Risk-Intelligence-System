@@ -18,12 +18,18 @@ class Settings(BaseSettings):
     redis_socket_timeout: float = 5.0
     redis_health_check_interval: int = 30
     log_level: str = "INFO"
+    log_json: bool | None = None
+    health_check_timeout_seconds: float = 2.0
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     @property
     def is_local(self) -> bool:
         return self.app_env.lower() in {"local", "dev", "development"}
+
+    @property
+    def use_json_logs(self) -> bool:
+        return self.log_json if self.log_json is not None else not self.is_local
 
 
 @lru_cache
