@@ -69,7 +69,7 @@ app/
 |   `-- router.py        # top-level API router registration
 |-- cache/               # Redis client, healthcheck, cache/state helpers
 |-- core/
-|   |-- graph/           # LangGraph state, nodes, and workflow assembly
+|   |-- graph/           # LangGraph state schemas, nodes, and workflow assembly
 |   |-- config.py        # environment-driven settings
 |   |-- health.py        # dependency healthcheck orchestration
 |   |-- lifespan.py      # startup/shutdown lifecycle
@@ -204,19 +204,29 @@ When PostgreSQL or Redis are unavailable in local development, the endpoint repo
 
 ## Workflow Overview
 
-The initial LangGraph workflow is a financial investigation workflow located in `app/core/graph`.
+The LangGraph workflow is a financial investigation workflow located in `app/core/graph`.
 
-Current workflow state:
+Current workflow capabilities:
 
-- `transaction_id`
-- `findings`
-- `risk_score`
-- `escalation_level`
-- `workflow_history`
+- modular typed investigation state with evidence, findings, risk, approvals, errors, and history
+- nested schemas for transaction context, compliance reviews, risk assessments, persistent memory, node results, and agent executions
+- async-ready nodes for transaction context, fraud, compliance, risk, critic, escalation, and reporting
+- deterministic conditional routing for report generation, evidence expansion, escalation, and failure
+- retry metadata and deterministic fallback hooks for production integrations
+- approval checkpoint state for future human-in-the-loop review
+- optional checkpointer injection for durable LangGraph persistence
 
-Current node:
+State schema modules:
 
-- `transaction_analysis_node`
+```text
+app/core/graph/state.py                    # canonical LangGraph state contract
+app/core/graph/state_schemas/enums.py      # statuses, routes, risk bands, agent roles
+app/core/graph/state_schemas/evidence.py   # evidence references and investigation findings
+app/core/graph/state_schemas/history.py    # workflow events, approvals, escalations
+app/core/graph/state_schemas/execution.py  # node results, retries, confidence, agent runs
+app/core/graph/state_schemas/risk.py       # risk assessment contract
+app/core/graph/state_schemas/investigation.py # transaction, subject, compliance, memory
+```
 
 Run the workflow example:
 
@@ -224,7 +234,9 @@ Run the workflow example:
 python examples/run_investigation_workflow.py
 ```
 
-The workflow uses typed state and reducer-based list updates so future nodes and agents can append findings and history without overwriting prior state.
+The workflow uses typed state and reducer-based list updates so future nodes and agents can append evidence, findings, errors, approvals, escalations, node results, agent executions, and history without overwriting prior state.
+
+See `docs/langgraph_investigation_workflow.md` for the architecture map and production guidance.
 
 ## Logging and Observability
 
@@ -277,9 +289,8 @@ Near-term backend work:
 
 AI workflow work:
 
-- expand investigation workflow with risk signal extraction
-- add policy and compliance review nodes
-- add human escalation and approval state
+- connect investigation workflow nodes to real fraud, compliance, and risk services
+- add LangGraph interrupt/resume support for human approval checkpoints
 - persist workflow runs and decision trails
 - introduce agent/tool interfaces for external data retrieval
 
