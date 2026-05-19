@@ -10,8 +10,11 @@ from app.core.graph.nodes import (
     evidence_expansion_node,
     fraud_analysis_node,
     human_approval_checkpoint_node,
+    low_risk_auto_close_node,
+    medium_risk_compliance_review_node,
     normalize_intake_node,
     report_generation_node,
+    risk_router_node,
     risk_scoring_node,
     workflow_failure_node,
 )
@@ -22,11 +25,35 @@ WORKFLOW_VERSION = "financial-investigation-v1"
 SCHEMA_VERSION = "investigation-state-v1"
 
 
-def route_after_critic(state: InvestigationState) -> WorkflowRoute:
-    return state.get("next_route", "report_generation")
+def route_after_context(state: InvestigationState) -> WorkflowRoute:
+    return state.get("next_route", "fraud_analysis")
+
+
+def route_after_fraud(state: InvestigationState) -> WorkflowRoute:
+    return state.get("next_route", "compliance_validation")
+
+
+def route_after_compliance(state: InvestigationState) -> WorkflowRoute:
+    return state.get("next_route", "risk_scoring")
+
+
+def route_after_risk_scoring(state: InvestigationState) -> WorkflowRoute:
+    return state.get("next_route", "risk_router")
+
+
+def route_after_risk_router(state: InvestigationState) -> WorkflowRoute:
+    return state.get("next_route", "workflow_failure")
 
 
 def route_after_escalation(state: InvestigationState) -> WorkflowRoute:
+    return state.get("next_route", "report_generation")
+
+
+def route_after_medium_review(state: InvestigationState) -> WorkflowRoute:
+    return state.get("next_route", "critic_validation")
+
+
+def route_after_critic(state: InvestigationState) -> WorkflowRoute:
     return state.get("next_route", "report_generation")
 
 
@@ -48,6 +75,9 @@ def build_investigation_workflow(
     workflow.add_node("fraud_analysis", fraud_analysis_node)
     workflow.add_node("compliance_validation", compliance_validation_node)
     workflow.add_node("risk_scoring", risk_scoring_node)
+    workflow.add_node("risk_router", risk_router_node)
+    workflow.add_node("low_risk_auto_close", low_risk_auto_close_node)
+    workflow.add_node("medium_risk_compliance_review", medium_risk_compliance_review_node)
     workflow.add_node("critic_validation", critic_validation_node)
     workflow.add_node("evidence_expansion", evidence_expansion_node)
     workflow.add_node("escalation_router", escalation_router_node)
@@ -57,10 +87,63 @@ def build_investigation_workflow(
 
     workflow.set_entry_point("normalize_intake")
     workflow.add_edge("normalize_intake", "collect_transaction_context")
-    workflow.add_edge("collect_transaction_context", "fraud_analysis")
-    workflow.add_edge("fraud_analysis", "compliance_validation")
-    workflow.add_edge("compliance_validation", "risk_scoring")
-    workflow.add_edge("risk_scoring", "critic_validation")
+    workflow.add_conditional_edges(
+        "collect_transaction_context",
+        route_after_context,
+        {
+            "fraud_analysis": "fraud_analysis",
+            "evidence_expansion": "evidence_expansion",
+            "workflow_failure": "workflow_failure",
+        },
+    )
+    workflow.add_conditional_edges(
+        "fraud_analysis",
+        route_after_fraud,
+        {
+            "compliance_validation": "compliance_validation",
+            "evidence_expansion": "evidence_expansion",
+            "workflow_failure": "workflow_failure",
+        },
+    )
+    workflow.add_conditional_edges(
+        "compliance_validation",
+        route_after_compliance,
+        {
+            "risk_scoring": "risk_scoring",
+            "evidence_expansion": "evidence_expansion",
+            "workflow_failure": "workflow_failure",
+        },
+    )
+    workflow.add_conditional_edges(
+        "risk_scoring",
+        route_after_risk_scoring,
+        {
+            "risk_router": "risk_router",
+            "evidence_expansion": "evidence_expansion",
+            "workflow_failure": "workflow_failure",
+        },
+    )
+    workflow.add_conditional_edges(
+        "risk_router",
+        route_after_risk_router,
+        {
+            "low_risk_auto_close": "low_risk_auto_close",
+            "medium_risk_compliance_review": "medium_risk_compliance_review",
+            "escalation_router": "escalation_router",
+            "workflow_failure": "workflow_failure",
+        },
+    )
+    workflow.add_edge("low_risk_auto_close", "report_generation")
+    workflow.add_conditional_edges(
+        "medium_risk_compliance_review",
+        route_after_medium_review,
+        {
+            "critic_validation": "critic_validation",
+            "evidence_expansion": "evidence_expansion",
+            "escalation_router": "escalation_router",
+            "workflow_failure": "workflow_failure",
+        },
+    )
     workflow.add_conditional_edges(
         "critic_validation",
         route_after_critic,

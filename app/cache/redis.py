@@ -86,3 +86,53 @@ class RedisStore:
     async def get_workflow_history(self, transaction_id: str) -> list[str]:
         values = await self._client.lrange(self.key("workflow", transaction_id, "history"), 0, -1)
         return [str(value) for value in values]
+
+    async def cache_workflow_state(
+        self,
+        thread_id: str,
+        state: dict[str, Any],
+        *,
+        ttl_seconds: int = 900,
+    ) -> None:
+        await self.set_json(self.key("workflow", thread_id, "state"), state, ttl_seconds)
+
+    async def get_cached_workflow_state(self, thread_id: str) -> dict[str, Any] | None:
+        return await self.get_json(self.key("workflow", thread_id, "state"))
+
+    async def cache_resume_pointer(
+        self,
+        thread_id: str,
+        *,
+        checkpoint_id: str,
+        snapshot_id: str | None = None,
+        ttl_seconds: int = 3600,
+    ) -> None:
+        payload = {"thread_id": thread_id, "checkpoint_id": checkpoint_id}
+        if snapshot_id is not None:
+            payload["snapshot_id"] = snapshot_id
+        await self.set_json(self.key("workflow", thread_id, "resume"), payload, ttl_seconds)
+
+    async def get_resume_pointer(self, thread_id: str) -> dict[str, Any] | None:
+        return await self.get_json(self.key("workflow", thread_id, "resume"))
+
+    async def append_execution_event(
+        self,
+        thread_id: str,
+        event: dict[str, Any],
+        *,
+        max_events: int = 500,
+        ttl_seconds: int = 3600,
+    ) -> None:
+        key = self.key("workflow", thread_id, "events")
+        await self._client.rpush(key, json.dumps(event, separators=(",", ":")))
+        await self._client.ltrim(key, -max_events, -1)
+        await self._client.expire(key, ttl_seconds)
+
+    async def get_execution_events(self, thread_id: str) -> list[dict[str, Any]]:
+        values = await self._client.lrange(self.key("workflow", thread_id, "events"), 0, -1)
+        events: list[dict[str, Any]] = []
+        for value in values:
+            decoded = json.loads(value)
+            if isinstance(decoded, dict):
+                events.append(decoded)
+        return events

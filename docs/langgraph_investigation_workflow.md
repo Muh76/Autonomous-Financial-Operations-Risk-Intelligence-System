@@ -16,17 +16,30 @@ normalize_intake
   -> fraud_analysis
   -> compliance_validation
   -> risk_scoring
-  -> critic_validation
-       -> report_generation
-       -> evidence_expansion -> fraud_analysis
+  -> risk_router
+       -> low_risk_auto_close -> report_generation
+       -> medium_risk_compliance_review -> critic_validation
        -> escalation_router -> human_approval_checkpoint
        -> workflow_failure
 ```
 
-Low-risk cases can move directly to report generation. Medium, high, regulatory, or blocking
-cases route through escalation logic. Approval checkpoints currently prepare typed approval
-records and stop the graph in `awaiting_human_approval`; once an analyst UI exists, this is the
-place to enable LangGraph `interrupt(...)` and resume with a structured reviewer decision.
+Low-risk cases move through an auto-close branch into report generation. Medium-risk cases route
+through enhanced compliance review and critic validation before reporting. High, critical, and
+blocking cases route through escalation logic. Approval checkpoints currently prepare typed
+approval records and stop the graph in `awaiting_human_approval`; once an analyst UI exists, this
+is the place to enable LangGraph `interrupt(...)` and resume with a structured reviewer decision.
+
+Retry and fallback routes are handled with conditional edges after resilient nodes:
+
+```text
+collect_transaction_context -> fraud_analysis | evidence_expansion | workflow_failure
+fraud_analysis              -> compliance_validation | evidence_expansion | workflow_failure
+compliance_validation       -> risk_scoring | evidence_expansion | workflow_failure
+risk_scoring                -> risk_router | evidence_expansion | workflow_failure
+```
+
+The router functions are deterministic and only read typed state fields such as `next_route`,
+`risk_band`, `escalation_level`, and retry/error metadata.
 
 ## State Strategy
 
@@ -59,18 +72,67 @@ This lets nodes add new investigation material without overwriting prior state.
 
 ## Retry and Fallback
 
-Node resilience is centralized in `with_node_resilience(...)`.
+Node resilience is centralized in `app/core/graph/retry.py`.
 
-The current pattern records:
+Core components:
+
+- `RetryPolicy`: node-level max attempts, retry route, failure route, recoverable classes, fallback name
+- `ErrorClassifier`: maps exceptions into enterprise failure classes
+- `RetryManager`: executes handlers, applies retry/fallback/failure routing, and writes structured state
+- `with_node_resilience(...)`: reusable async utility for LangGraph nodes
+- `RecoverableNodeError`: explicit recoverable node failure
+- `NonRecoverableNodeError`: explicit hard-stop node failure
+
+Failure classes:
+
+- `transient`
+- `rate_limit`
+- `timeout`
+- `validation`
+- `semantic`
+- `dependency`
+- `permission`
+- `non_recoverable`
+- `unknown`
+
+The retry system records:
 
 - retry count per node
 - typed node errors
 - fallback provider names
 - workflow history events
 - recovery routing to evidence expansion
+- retry exhaustion state
+- recoverable vs non-recoverable classification
+- node result envelopes for future observability integrations
 
 Production integrations should add provider-specific retry policies, idempotency keys, circuit
 breakers, and action ledgers for external side effects.
+
+Example node integration:
+
+```python
+return await with_node_resilience(
+    "fraud_analysis",
+    state,
+    handler,
+    fallback,
+    policy=RetryPolicy(
+        max_attempts=2,
+        retry_route="evidence_expansion",
+        fallback_name="deterministic_fallback",
+    ),
+)
+```
+
+Retry route behavior:
+
+```text
+recoverable failure before max attempts -> evidence_expansion
+retry exhaustion with fallback          -> fallback result path
+retry exhaustion without fallback       -> workflow_failure
+non-recoverable failure                 -> fallback or workflow_failure
+```
 
 ## Persistence
 

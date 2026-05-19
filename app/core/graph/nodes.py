@@ -1,8 +1,8 @@
-from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
+from app.core.graph.retry import RetryPolicy, with_node_resilience
 from app.core.graph.state import (
     AgentExecution,
     AgentRole,
@@ -21,11 +21,7 @@ from app.core.graph.state import (
     WorkflowEventStatus,
 )
 
-MAX_SEMANTIC_RETRIES = 2
-
-
 PartialState = dict[str, Any]
-NodeHandler = Callable[[InvestigationState], Awaitable[PartialState]]
 
 
 def _now() -> str:
@@ -89,22 +85,6 @@ def _agent_execution(
     return execution
 
 
-def _error(
-    node: str,
-    error: Exception,
-    *,
-    retryable: bool,
-    attempt: int,
-) -> NodeError:
-    return {
-        "node": node,
-        "error_type": type(error).__name__,
-        "message": str(error),
-        "retryable": retryable,
-        "attempt": attempt,
-    }
-
-
 def _finding(
     *,
     category: FindingCategory,
@@ -162,137 +142,6 @@ def _escalation_from_risk(risk_band: RiskBand, compliance_flags: list[str]) -> E
     if risk_band == "medium":
         return "analyst_review"
     return "none"
-
-
-def _attempt(state: InvestigationState, node: str) -> int:
-    return state.get("retry_counts", {}).get(node, 0) + 1
-
-
-async def with_node_resilience(
-    node: str,
-    state: InvestigationState,
-    handler: NodeHandler,
-    fallback: NodeHandler | None = None,
-) -> PartialState:
-    """Wrap a node with retry metadata and deterministic fallback routing."""
-
-    attempt = _attempt(state, node)
-    try:
-        result = await handler(state)
-        retry_counts = dict(state.get("retry_counts", {}))
-        retry_counts[node] = attempt
-        retry_state = dict(state.get("retry_state", {}))
-        retry_state[node] = {
-            "node": node,
-            "attempts": attempt,
-            "max_attempts": MAX_SEMANTIC_RETRIES,
-            "retryable": False,
-        }
-        result.setdefault("retry_counts", retry_counts)
-        result.setdefault("retry_state", retry_state)
-        result.setdefault("workflow_history", [])
-        result["workflow_history"].append(_event(node, "completed", "Node completed successfully."))
-        result.setdefault("node_results", [])
-        result["node_results"].append(
-            _node_result(node, "success", sorted(key for key in result if key != "node_results"))
-        )
-        return result
-    except Exception as exc:
-        retryable = attempt <= MAX_SEMANTIC_RETRIES
-        error = _error(node, exc, retryable=retryable, attempt=attempt)
-        retry_counts = dict(state.get("retry_counts", {}))
-        retry_counts[node] = attempt
-
-        if retryable:
-            return {
-                "status": "evidence_expansion",
-                "next_route": "evidence_expansion",
-                "retry_counts": retry_counts,
-                "retry_state": {
-                    **state.get("retry_state", {}),
-                    node: {
-                        "node": node,
-                        "attempts": attempt,
-                        "max_attempts": MAX_SEMANTIC_RETRIES,
-                        "retryable": True,
-                        "last_error_type": type(exc).__name__,
-                    },
-                },
-                "node_errors": [error],
-                "node_results": [
-                    _node_result(
-                        node,
-                        "retrying",
-                        ["status", "next_route", "node_errors"],
-                        next_route="evidence_expansion",
-                        error=error,
-                    )
-                ],
-                "workflow_history": [
-                    _event(node, "failed", "Node failed and will route to recovery.")
-                ],
-            }
-
-        if fallback is not None:
-            fallback_result = await fallback(state)
-            fallback_used = dict(state.get("fallback_used", {}))
-            fallback_used[node] = "deterministic_fallback"
-            fallback_result["retry_counts"] = retry_counts
-            fallback_result["retry_state"] = {
-                **state.get("retry_state", {}),
-                node: {
-                    "node": node,
-                    "attempts": attempt,
-                    "max_attempts": MAX_SEMANTIC_RETRIES,
-                    "retryable": False,
-                    "last_error_type": type(exc).__name__,
-                    "fallback_used": "deterministic_fallback",
-                },
-            }
-            fallback_result["fallback_used"] = fallback_used
-            fallback_result.setdefault("node_errors", [])
-            fallback_result["node_errors"].append(error)
-            fallback_result.setdefault("node_results", [])
-            fallback_result["node_results"].append(
-                _node_result(
-                    node,
-                    "fallback",
-                    sorted(key for key in fallback_result if key != "node_results"),
-                    error=error,
-                )
-            )
-            fallback_result.setdefault("workflow_history", [])
-            fallback_result["workflow_history"].append(
-                _event(node, "fallback", "Fallback completed after retry exhaustion.")
-            )
-            return fallback_result
-
-        return {
-            "status": "failed",
-            "next_route": "workflow_failure",
-            "retry_counts": retry_counts,
-            "retry_state": {
-                **state.get("retry_state", {}),
-                node: {
-                    "node": node,
-                    "attempts": attempt,
-                    "max_attempts": MAX_SEMANTIC_RETRIES,
-                    "retryable": False,
-                    "last_error_type": type(exc).__name__,
-                },
-            },
-            "node_errors": [error],
-            "node_results": [
-                _node_result(
-                    node,
-                    "failed",
-                    ["status", "next_route", "node_errors"],
-                    next_route="workflow_failure",
-                    error=error,
-                )
-            ],
-            "workflow_history": [_event(node, "failed", "Node failed without fallback.")],
-        }
 
 
 async def normalize_intake_node(state: InvestigationState) -> PartialState:
@@ -383,7 +232,12 @@ async def collect_transaction_context_node(state: InvestigationState) -> Partial
             ],
         }
 
-    return await with_node_resilience("collect_transaction_context", state, handler)
+    return await with_node_resilience(
+        "collect_transaction_context",
+        state,
+        handler,
+        policy=RetryPolicy(max_attempts=2, retry_route="evidence_expansion"),
+    )
 
 
 async def fraud_analysis_node(state: InvestigationState) -> PartialState:
@@ -447,7 +301,17 @@ async def fraud_analysis_node(state: InvestigationState) -> PartialState:
             ],
         }
 
-    return await with_node_resilience("fraud_analysis", state, handler, fallback)
+    return await with_node_resilience(
+        "fraud_analysis",
+        state,
+        handler,
+        fallback,
+        policy=RetryPolicy(
+            max_attempts=2,
+            retry_route="evidence_expansion",
+            fallback_name="deterministic_fallback",
+        ),
+    )
 
 
 async def compliance_validation_node(state: InvestigationState) -> PartialState:
@@ -525,7 +389,17 @@ async def compliance_validation_node(state: InvestigationState) -> PartialState:
             ],
         }
 
-    return await with_node_resilience("compliance_validation", state, handler, fallback)
+    return await with_node_resilience(
+        "compliance_validation",
+        state,
+        handler,
+        fallback,
+        policy=RetryPolicy(
+            max_attempts=2,
+            retry_route="evidence_expansion",
+            fallback_name="manual_review",
+        ),
+    )
 
 
 async def risk_scoring_node(state: InvestigationState) -> PartialState:
@@ -537,10 +411,11 @@ async def risk_scoring_node(state: InvestigationState) -> PartialState:
     escalation_level = _escalation_from_risk(risk_band, compliance_flags)
 
     return {
-        "status": "critic_validation",
+        "status": "risk_scoring",
         "aggregate_risk_score": aggregate,
         "risk_band": risk_band,
         "escalation_level": escalation_level,
+        "next_route": "risk_router",
         "recommended_actions": _recommended_actions(risk_band, escalation_level),
         "risk_assessment": {
             "fraud_score": fraud_score,
@@ -588,6 +463,124 @@ def _recommended_actions(risk_band: RiskBand, escalation_level: EscalationLevel)
     return ["close_as_low_risk"]
 
 
+async def risk_router_node(state: InvestigationState) -> PartialState:
+    """Deterministically route cases into low, medium, or escalation branches."""
+
+    risk_band = state.get("risk_band", "low")
+    escalation_level = state.get("escalation_level", "none")
+    compliance_flags = state.get("compliance_flags", [])
+
+    if escalation_level == "block" or risk_band in {"high", "critical"}:
+        next_route = "escalation_router"
+        status = "awaiting_human_approval"
+        message = f"{risk_band} risk with {escalation_level} escalation routed to approval."
+    elif (
+        risk_band == "medium"
+        or escalation_level == "regulatory"
+        or "manual_compliance_review_required" in compliance_flags
+    ):
+        next_route = "medium_risk_compliance_review"
+        status = "compliance_validation"
+        message = "Medium risk routed to enhanced compliance review."
+    else:
+        next_route = "low_risk_auto_close"
+        status = "reporting"
+        message = "Low risk routed to auto-close."
+
+    return {
+        "status": status,
+        "next_route": next_route,
+        "node_results": [
+            _node_result(
+                "risk_router",
+                "success",
+                ["status", "next_route"],
+                confidence=state.get("confidence", 0.88),
+                next_route=next_route,
+            )
+        ],
+        "workflow_history": [_event("risk_router", "routed", message)],
+    }
+
+
+async def low_risk_auto_close_node(state: InvestigationState) -> PartialState:
+    """Low-risk branch: mark the case eligible for automatic closure."""
+
+    return {
+        "status": "reporting",
+        "next_route": "report_generation",
+        "recommended_actions": ["auto_close", *state.get("recommended_actions", [])],
+        "node_results": [
+            _node_result(
+                "low_risk_auto_close",
+                "success",
+                ["status", "next_route", "recommended_actions"],
+                next_route="report_generation",
+            )
+        ],
+        "workflow_history": [
+            _event("low_risk_auto_close", "routed", "Low-risk case approved for auto-close.")
+        ],
+    }
+
+
+async def medium_risk_compliance_review_node(state: InvestigationState) -> PartialState:
+    """Medium-risk branch: require compliance-focused validation before report closure."""
+
+    flags = state.get("compliance_flags", [])
+    review_notes = ["Medium-risk case requires compliance review before closure."]
+    if not flags:
+        flags = ["medium_risk_compliance_review"]
+
+    return {
+        "status": "critic_validation",
+        "next_route": "critic_validation",
+        "compliance_flags": flags,
+        "compliance_review": {
+            "sanctions_screened": True,
+            "pep_screened": True,
+            "aml_rules_evaluated": True,
+            "jurisdiction_checked": True,
+            "flags": flags,
+            "policy_version": "compliance-policy-v1",
+            "reviewer_notes": review_notes,
+        },
+        "findings": [
+            _finding(
+                category="compliance",
+                severity="medium",
+                description="Medium-risk branch completed enhanced compliance review.",
+                evidence_ids=[item["evidence_id"] for item in state.get("evidence", [])],
+                confidence=0.86,
+                source_node="medium_risk_compliance_review",
+            )
+        ],
+        "node_results": [
+            _node_result(
+                "medium_risk_compliance_review",
+                "success",
+                ["status", "next_route", "compliance_flags", "compliance_review", "findings"],
+                confidence=0.86,
+                next_route="critic_validation",
+            )
+        ],
+        "agent_executions": [
+            _agent_execution(
+                agent_role="compliance_reviewer",
+                node="medium_risk_compliance_review",
+                confidence=0.86,
+            )
+        ],
+        "workflow_history": [
+            _event(
+                "medium_risk_compliance_review",
+                "completed",
+                "Enhanced compliance review completed for medium-risk case.",
+            )
+        ],
+    }
+
+
 async def critic_validation_node(state: InvestigationState) -> PartialState:
     evidence_count = len(state.get("evidence", []))
     findings_count = len(state.get("findings", []))
@@ -601,7 +594,10 @@ async def critic_validation_node(state: InvestigationState) -> PartialState:
 
     passed = not notes and confidence >= 0.7
     next_route = "report_generation" if passed else "evidence_expansion"
-    if state.get("escalation_level") in {"senior_review", "regulatory", "block"} and passed:
+    if (
+        state.get("escalation_level") in {"senior_review", "block"}
+        or state.get("risk_band") in {"high", "critical"}
+    ) and passed:
         next_route = "escalation_router"
 
     return {

@@ -40,6 +40,8 @@ Current architecture components:
 - async SQLAlchemy database integration
 - async Redis integration
 - typed LangGraph investigation workflow
+- PostgreSQL workflow persistence models and investigation repository
+- Redis workflow state cache and resume pointer helpers
 - Docker Compose for local API, PostgreSQL, and Redis
 
 ## Tech Stack
@@ -77,8 +79,8 @@ app/
 |   `-- middleware.py    # request tracing middleware
 |-- db/                  # async SQLAlchemy engine and session management
 |-- integrations/        # future external systems and vendor clients
-|-- models/              # future SQLAlchemy ORM models
-|-- repositories/        # future persistence boundaries
+|-- models/              # SQLAlchemy ORM models
+|-- repositories/        # persistence boundaries and repositories
 |-- schemas/             # Pydantic request and response models
 |-- services/            # application service layer
 `-- tasks/               # future background jobs and scheduled workflows
@@ -211,8 +213,8 @@ Current workflow capabilities:
 - modular typed investigation state with evidence, findings, risk, approvals, errors, and history
 - nested schemas for transaction context, compliance reviews, risk assessments, persistent memory, node results, and agent executions
 - async-ready nodes for transaction context, fraud, compliance, risk, critic, escalation, and reporting
-- deterministic conditional routing for report generation, evidence expansion, escalation, and failure
-- retry metadata and deterministic fallback hooks for production integrations
+- deterministic conditional routing for low-risk auto-close, medium-risk compliance review, high-risk escalation, evidence expansion, and failure
+- reusable retry manager with failure classification, retry exhaustion tracking, and deterministic fallback hooks
 - approval checkpoint state for future human-in-the-loop review
 - optional checkpointer injection for durable LangGraph persistence
 
@@ -226,6 +228,9 @@ app/core/graph/state_schemas/history.py    # workflow events, approvals, escalat
 app/core/graph/state_schemas/execution.py  # node results, retries, confidence, agent runs
 app/core/graph/state_schemas/risk.py       # risk assessment contract
 app/core/graph/state_schemas/investigation.py # transaction, subject, compliance, memory
+app/core/graph/retry.py                    # retry manager, policies, fallback utilities
+app/models/investigations.py               # workflow run, snapshot, history, checkpoint models
+app/repositories/investigations.py         # investigation persistence repository
 ```
 
 Run the workflow example:
@@ -237,6 +242,7 @@ python examples/run_investigation_workflow.py
 The workflow uses typed state and reducer-based list updates so future nodes and agents can append evidence, findings, errors, approvals, escalations, node results, agent executions, and history without overwriting prior state.
 
 See `docs/langgraph_investigation_workflow.md` for the architecture map and production guidance.
+See `docs/workflow_persistence_architecture.md` for the persistence, checkpointing, Redis, and PostgreSQL design.
 
 ## Logging and Observability
 
@@ -269,6 +275,9 @@ Current support:
 - healthcheck helper
 - JSON cache helper
 - workflow history helper
+- workflow state cache helper
+- workflow resume pointer helper
+- short-lived execution event stream helper
 
 Run the Redis example after starting Redis:
 
@@ -280,8 +289,7 @@ python examples/redis_usage.py
 
 Near-term backend work:
 
-- add SQLAlchemy base model and initial domain models
-- add Alembic migrations
+- add Alembic migrations for investigation persistence models
 - implement repository interfaces for patients, transactions, investigations, and evaluations
 - connect services to PostgreSQL persistence
 - add test suite with async database and Redis fixtures

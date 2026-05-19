@@ -6,6 +6,17 @@ EscalationLevel = Literal["none", "analyst_review", "senior_review", "regulatory
 FindingCategory = Literal["transaction", "fraud", "compliance", "risk", "critic", "report"]
 WorkflowEventStatus = Literal["started", "completed", "failed", "fallback", "routed", "interrupted"]
 NodeExecutionStatus = Literal["success", "failed", "retrying", "fallback", "skipped"]
+FailureClass = Literal[
+    "transient",
+    "rate_limit",
+    "timeout",
+    "validation",
+    "semantic",
+    "dependency",
+    "permission",
+    "non_recoverable",
+    "unknown",
+]
 ApprovalStatus = Literal["not_required", "pending", "approved", "rejected"]
 EvidenceType = Literal[
     "transaction_snapshot",
@@ -39,6 +50,13 @@ CaseStatus = Literal[
     "failed",
 ]
 WorkflowRoute = Literal[
+    "risk_router",
+    "fraud_analysis",
+    "compliance_validation",
+    "risk_scoring",
+    "critic_validation",
+    "low_risk_auto_close",
+    "medium_risk_compliance_review",
     "report_generation",
     "evidence_expansion",
     "escalation_router",

@@ -1,6 +1,6 @@
 from typing import NotRequired, TypedDict
 
-from app.core.graph.state_schemas.enums import AgentRole, NodeExecutionStatus
+from app.core.graph.state_schemas.enums import AgentRole, FailureClass, NodeExecutionStatus
 
 
 class NodeError(TypedDict):
@@ -11,6 +11,8 @@ class NodeError(TypedDict):
     message: str
     retryable: bool
     attempt: int
+    failure_class: NotRequired[FailureClass]
+    recoverable: NotRequired[bool]
     provider: NotRequired[str]
 
 
@@ -21,7 +23,10 @@ class RetryState(TypedDict):
     attempts: int
     max_attempts: int
     retryable: bool
+    exhausted: NotRequired[bool]
     last_error_type: NotRequired[str]
+    last_failure_class: NotRequired[FailureClass]
+    next_retry_route: NotRequired[str]
     fallback_used: NotRequired[str]
 
 
