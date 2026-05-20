@@ -224,6 +224,8 @@ Current workflow capabilities:
 - human approval checkpoint architecture for high-risk escalation pause/resume
 - workflow visualization metadata for dashboards, timelines, and replay systems
 - production-style pytest architecture for deterministic LangGraph workflow validation
+- production-grade Transaction Analysis Agent for aggregation, temporal analysis, anomaly heuristics, and chain analysis
+- explainable Fraud Detection Agent with deterministic heuristics and AI-assisted narrative support
 - approval checkpoint state for future human-in-the-loop review
 - optional checkpointer injection for durable LangGraph persistence
 
@@ -239,6 +241,8 @@ app/core/graph/state_schemas/risk.py       # risk assessment contract
 app/core/graph/state_schemas/investigation.py # transaction, subject, compliance, memory
 app/core/graph/retry.py                    # retry manager, policies, fallback utilities
 app/core/graph/parallel_workflow.py        # parallel fan-out/fan-in workflow example
+app/core/graph/transaction_analysis_node.py # Transaction Analysis Agent node wrapper
+app/core/graph/fraud_detection_node.py     # Fraud Detection Agent node wrapper
 app/models/investigations.py               # workflow run, snapshot, history, checkpoint models
 app/repositories/investigations.py         # investigation persistence repository
 app/models/memory.py                       # durable workflow memory, evidence, retry, feedback models
@@ -246,6 +250,8 @@ app/repositories/memory.py                 # workflow memory repository
 app/services/workflow_memory.py            # Redis/PostgreSQL agent memory service
 app/services/approval_checkpoints.py       # approval decision and pause/resume helpers
 app/services/workflow_visualization.py     # dashboard and replay metadata builder
+app/services/transaction_analysis.py       # deterministic transaction analysis agent service
+app/services/fraud_detection.py            # explainable fraud scoring and evidence service
 ```
 
 Run the workflow example:
@@ -269,6 +275,8 @@ See `docs/parallel_execution_architecture.md` for scalable parallel execution, a
 See `docs/human_approval_checkpoint_architecture.md` for high-risk escalation checkpoints, approval states, audit logging, and pause/resume strategy.
 See `docs/workflow_visualization_metadata.md` for graph metadata, node timing, edge traversal, retry visualization, and timeline generation.
 See `docs/workflow_testing_architecture.md` for pytest structure, fixtures, node isolation tests, branching tests, retry tests, and workflow integration tests.
+See `docs/transaction_analysis_agent.md` for the Transaction Analysis Agent architecture, typed outputs, pipeline, and LangGraph node wrapper.
+See `docs/fraud_detection_agent.md` for explainable fraud scoring, evidence generation, heuristics, typed outputs, and LangGraph integration.
 
 ## Workflow Memory
 
@@ -347,6 +355,51 @@ pytest tests/unit
 
 The tests use complete mock `InvestigationState` fixtures and avoid external services, so they are suitable for CI expansion as the workflow grows.
 
+## Transaction Analysis Agent
+
+The Transaction Analysis Agent provides deterministic transaction intelligence for financial investigations.
+
+It supports:
+
+- transaction aggregation
+- temporal velocity and burst analysis
+- behavioral pattern detection
+- anomaly heuristics
+- transaction chain analysis
+- suspicious activity indicators
+- confidence scoring
+- LangGraph-compatible state updates
+
+Run the example:
+
+```bash
+python examples/run_transaction_analysis_agent.py
+```
+
+The agent emits a typed `TransactionAnalysisResult` and maps it into workflow state as `transaction_analysis`, `fraud_score`, `fraud_typologies`, evidence, findings, and agent execution metadata.
+
+## Fraud Detection Agent
+
+The Fraud Detection Agent provides explainable fraud scoring for enterprise investigations.
+
+It supports:
+
+- anomaly scoring
+- suspicious behavior analysis
+- geographic inconsistency checks
+- transaction velocity checks
+- fraud heuristic evidence generation
+- escalation recommendations
+- deterministic scoring with AI-assisted narrative extension points
+
+Run the example:
+
+```bash
+python examples/run_fraud_detection_agent.py
+```
+
+The agent emits a typed `FraudDetectionResult` and maps it into workflow state as `fraud_detection`, `fraud_score`, `risk_band`, `fraud_typologies`, evidence, findings, recommended actions, and agent execution metadata.
+
 ## Logging and Observability
 
 Structured logging is configured with `structlog`.
@@ -414,6 +467,8 @@ AI workflow work:
 - add critic review routing after low-confidence parallel branch fallbacks
 - expose workflow visualization metadata through API endpoints
 - expand workflow tests with repository, Redis, and checkpointer integration coverage
+- integrate the Transaction Analysis Agent into the default investigation graph
+- integrate the Fraud Detection Agent into the default investigation graph
 
 Operational work:
 

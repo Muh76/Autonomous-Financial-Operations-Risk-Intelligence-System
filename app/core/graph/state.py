@@ -16,6 +16,7 @@ from app.core.graph.state_schemas import (
     EvidenceType,
     FailureClass,
     FindingCategory,
+    FraudDetectionResult,
     InvestigationFinding,
     InvestigationMemory,
     NodeExecutionTrace,
@@ -26,7 +27,9 @@ from app.core.graph.state_schemas import (
     RiskAssessment,
     RiskBand,
     SubjectProfile,
+    TransactionAnalysisResult,
     TransactionContext,
+    TransactionObservation,
     WorkflowEvent,
     WorkflowEventStatus,
     WorkflowRoute,
@@ -57,11 +60,14 @@ class InvestigationState(TypedDict):
     jurisdiction: NotRequired[str]
 
     transaction: NotRequired[TransactionContext]
+    transaction_history: NotRequired[list[TransactionObservation]]
     subject: NotRequired[SubjectProfile]
     compliance_review: NotRequired[ComplianceReviewState]
     risk_assessment: NotRequired[RiskAssessment]
     confidence_assessment: NotRequired[ConfidenceAssessment]
     persistent_memory: NotRequired[InvestigationMemory]
+    transaction_analysis: NotRequired[TransactionAnalysisResult]
+    fraud_detection: NotRequired[FraudDetectionResult]
 
     transaction_snapshot: NotRequired[dict[str, str | int | float | bool | None]]
     customer_profile: NotRequired[dict[str, str | int | float | bool | None]]
@@ -117,6 +123,7 @@ __all__ = [
     "EvidenceType",
     "FailureClass",
     "FindingCategory",
+    "FraudDetectionResult",
     "InvestigationFinding",
     "InvestigationMemory",
     "InvestigationState",
@@ -129,6 +136,8 @@ __all__ = [
     "RiskBand",
     "SubjectProfile",
     "TransactionContext",
+    "TransactionAnalysisResult",
+    "TransactionObservation",
     "EdgeTraversalTrace",
     "WorkflowEvent",
     "WorkflowEventStatus",

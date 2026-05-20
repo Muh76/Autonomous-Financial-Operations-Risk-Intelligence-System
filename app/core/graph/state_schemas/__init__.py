@@ -21,6 +21,12 @@ from app.core.graph.state_schemas.execution import (
     NodeResult,
     RetryState,
 )
+from app.core.graph.state_schemas.fraud_detection import (
+    FraudDetectionResult,
+    FraudEvidence,
+    FraudHeuristicResult,
+    FraudSignalType,
+)
 from app.core.graph.state_schemas.history import ApprovalRequest, EscalationDecision, WorkflowEvent
 from app.core.graph.state_schemas.investigation import (
     ComplianceReviewState,
@@ -29,6 +35,15 @@ from app.core.graph.state_schemas.investigation import (
     TransactionContext,
 )
 from app.core.graph.state_schemas.risk import RiskAssessment
+from app.core.graph.state_schemas.transaction_analysis import (
+    SuspiciousActivityIndicator,
+    TemporalAnalysis,
+    TransactionAggregate,
+    TransactionAnalysisResult,
+    TransactionChainHop,
+    TransactionObservation,
+    TransactionPatternType,
+)
 from app.core.graph.state_schemas.visualization import (
     EdgeTraversalTrace,
     EscalationPathTrace,
@@ -57,6 +72,10 @@ __all__ = [
     "EvidenceType",
     "FailureClass",
     "FindingCategory",
+    "FraudDetectionResult",
+    "FraudEvidence",
+    "FraudHeuristicResult",
+    "FraudSignalType",
     "GraphEdgeMetadata",
     "GraphNodeMetadata",
     "InvestigationFinding",
@@ -70,8 +89,15 @@ __all__ = [
     "RiskAssessment",
     "RiskBand",
     "SubjectProfile",
+    "SuspiciousActivityIndicator",
+    "TemporalAnalysis",
     "TimelineEventType",
     "TransactionContext",
+    "TransactionAggregate",
+    "TransactionAnalysisResult",
+    "TransactionChainHop",
+    "TransactionObservation",
+    "TransactionPatternType",
     "TraceStatus",
     "EdgeTraversalTrace",
     "WorkflowEvent",
