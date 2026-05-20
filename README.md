@@ -223,6 +223,7 @@ Current workflow capabilities:
 - result aggregation after parallel branch completion
 - human approval checkpoint architecture for high-risk escalation pause/resume
 - workflow visualization metadata for dashboards, timelines, and replay systems
+- production-style pytest architecture for deterministic LangGraph workflow validation
 - approval checkpoint state for future human-in-the-loop review
 - optional checkpointer injection for durable LangGraph persistence
 
@@ -267,6 +268,7 @@ See `docs/workflow_memory_architecture.md` for the workflow memory architecture,
 See `docs/parallel_execution_architecture.md` for scalable parallel execution, async node patterns, aggregation, and timeout handling.
 See `docs/human_approval_checkpoint_architecture.md` for high-risk escalation checkpoints, approval states, audit logging, and pause/resume strategy.
 See `docs/workflow_visualization_metadata.md` for graph metadata, node timing, edge traversal, retry visualization, and timeline generation.
+See `docs/workflow_testing_architecture.md` for pytest structure, fixtures, node isolation tests, branching tests, retry tests, and workflow integration tests.
 
 ## Workflow Memory
 
@@ -317,6 +319,33 @@ It supports:
 - workflow timeline generation
 
 `WorkflowVisualizationService` builds visualization payloads from workflow state, including existing `workflow_history`, `node_results`, `agent_executions`, `retry_state`, and `escalations`. This keeps dashboards and replay systems rebuildable from durable workflow history.
+
+## Workflow Testing
+
+The test scaffold is organized around deterministic LangGraph validation.
+
+Current test layers:
+
+- node isolation tests
+- branching and state transition tests
+- retry policy tests
+- approval checkpoint tests
+- visualization metadata tests
+- workflow integration tests
+
+Run the test suite:
+
+```bash
+pytest tests
+```
+
+Run only fast unit coverage:
+
+```bash
+pytest tests/unit
+```
+
+The tests use complete mock `InvestigationState` fixtures and avoid external services, so they are suitable for CI expansion as the workflow grows.
 
 ## Logging and Observability
 
@@ -384,6 +413,7 @@ AI workflow work:
 - wire workflow memory service into graph node execution boundaries
 - add critic review routing after low-confidence parallel branch fallbacks
 - expose workflow visualization metadata through API endpoints
+- expand workflow tests with repository, Redis, and checkpointer integration coverage
 
 Operational work:
 
