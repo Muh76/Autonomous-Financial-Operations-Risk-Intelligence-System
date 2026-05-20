@@ -221,6 +221,8 @@ Current workflow capabilities:
 - reusable retry manager with failure classification, retry exhaustion tracking, and deterministic fallback hooks
 - timeout fallback handling for parallel async branches
 - result aggregation after parallel branch completion
+- human approval checkpoint architecture for high-risk escalation pause/resume
+- workflow visualization metadata for dashboards, timelines, and replay systems
 - approval checkpoint state for future human-in-the-loop review
 - optional checkpointer injection for durable LangGraph persistence
 
@@ -241,6 +243,8 @@ app/repositories/investigations.py         # investigation persistence repositor
 app/models/memory.py                       # durable workflow memory, evidence, retry, feedback models
 app/repositories/memory.py                 # workflow memory repository
 app/services/workflow_memory.py            # Redis/PostgreSQL agent memory service
+app/services/approval_checkpoints.py       # approval decision and pause/resume helpers
+app/services/workflow_visualization.py     # dashboard and replay metadata builder
 ```
 
 Run the workflow example:
@@ -261,6 +265,8 @@ See `docs/langgraph_investigation_workflow.md` for the architecture map and prod
 See `docs/workflow_persistence_architecture.md` for the persistence, checkpointing, Redis, and PostgreSQL design.
 See `docs/workflow_memory_architecture.md` for the workflow memory architecture, Redis short-term memory, PostgreSQL durable memory, and repository strategy.
 See `docs/parallel_execution_architecture.md` for scalable parallel execution, async node patterns, aggregation, and timeout handling.
+See `docs/human_approval_checkpoint_architecture.md` for high-risk escalation checkpoints, approval states, audit logging, and pause/resume strategy.
+See `docs/workflow_visualization_metadata.md` for graph metadata, node timing, edge traversal, retry visualization, and timeline generation.
 
 ## Workflow Memory
 
@@ -296,6 +302,21 @@ Concurrency safety is handled by:
 - centralizing aggregate risk decisions in the join node
 - wrapping branch execution with timeout fallbacks
 - recording branch outputs, errors, and agent execution metadata
+
+## Workflow Visualization
+
+The visualization metadata layer turns LangGraph execution state into dashboard-ready read models.
+
+It supports:
+
+- static graph node and edge metadata
+- node execution timing
+- edge traversal tracking
+- retry visualization
+- escalation path tracking
+- workflow timeline generation
+
+`WorkflowVisualizationService` builds visualization payloads from workflow state, including existing `workflow_history`, `node_results`, `agent_executions`, `retry_state`, and `escalations`. This keeps dashboards and replay systems rebuildable from durable workflow history.
 
 ## Logging and Observability
 
@@ -362,6 +383,7 @@ AI workflow work:
 - introduce agent/tool interfaces for external data retrieval
 - wire workflow memory service into graph node execution boundaries
 - add critic review routing after low-confidence parallel branch fallbacks
+- expose workflow visualization metadata through API endpoints
 
 Operational work:
 

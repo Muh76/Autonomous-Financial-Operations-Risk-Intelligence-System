@@ -20,6 +20,7 @@ from app.core.graph.state import (
     WorkflowEvent,
     WorkflowEventStatus,
 )
+from app.services.approval_checkpoints import latest_approval_states
 
 PartialState = dict[str, Any]
 
@@ -690,8 +691,8 @@ async def escalation_router_node(state: InvestigationState) -> PartialState:
 
 
 async def human_approval_checkpoint_node(state: InvestigationState) -> PartialState:
-    approvals = state.get("approvals", [])
-    pending = [approval for approval in approvals if approval["status"] == "pending"]
+    approvals = latest_approval_states(state.get("approvals", []))
+    pending = [approval for approval in approvals.values() if approval["status"] == "pending"]
     if not pending:
         return {
             "status": "reporting",

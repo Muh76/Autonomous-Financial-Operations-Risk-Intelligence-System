@@ -11,12 +11,14 @@ from app.core.graph.state_schemas import (
     ConfidenceAssessment,
     EscalationDecision,
     EscalationLevel,
+    EdgeTraversalTrace,
     EvidenceRef,
     EvidenceType,
     FailureClass,
     FindingCategory,
     InvestigationFinding,
     InvestigationMemory,
+    NodeExecutionTrace,
     NodeError,
     NodeExecutionStatus,
     NodeResult,
@@ -28,6 +30,7 @@ from app.core.graph.state_schemas import (
     WorkflowEvent,
     WorkflowEventStatus,
     WorkflowRoute,
+    WorkflowTimelineEvent,
 )
 
 
@@ -74,6 +77,9 @@ class InvestigationState(TypedDict):
     escalations: Annotated[list[EscalationDecision], add]
     node_results: Annotated[list[NodeResult], add]
     agent_executions: Annotated[list[AgentExecution], add]
+    node_traces: Annotated[list[NodeExecutionTrace], add]
+    edge_traversals: Annotated[list[EdgeTraversalTrace], add]
+    timeline_events: Annotated[list[WorkflowTimelineEvent], add]
 
     retry_counts: dict[str, int]
     retry_state: dict[str, RetryState]
@@ -115,6 +121,7 @@ __all__ = [
     "InvestigationMemory",
     "InvestigationState",
     "NodeError",
+    "NodeExecutionTrace",
     "NodeExecutionStatus",
     "NodeResult",
     "RetryState",
@@ -122,7 +129,9 @@ __all__ = [
     "RiskBand",
     "SubjectProfile",
     "TransactionContext",
+    "EdgeTraversalTrace",
     "WorkflowEvent",
     "WorkflowEventStatus",
     "WorkflowRoute",
+    "WorkflowTimelineEvent",
 ]
