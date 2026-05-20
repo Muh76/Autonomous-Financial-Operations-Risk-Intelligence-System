@@ -64,7 +64,12 @@ class RedisStore:
         clean_parts = [part.strip(":") for part in parts if part]
         return ":".join([self._namespace, *clean_parts])
 
-    async def set_json(self, key: str, value: dict[str, Any], ttl_seconds: int | None = None) -> None:
+    async def set_json(
+        self,
+        key: str,
+        value: dict[str, Any],
+        ttl_seconds: int | None = None,
+    ) -> None:
         await self._client.set(
             key,
             json.dumps(value, separators=(",", ":")),
@@ -94,7 +99,8 @@ class RedisStore:
         *,
         ttl_seconds: int = 900,
     ) -> None:
-        await self.set_json(self.key("workflow", thread_id, "state"), state, ttl_seconds)
+        key = self.key("workflow", thread_id, "state")
+        await self.set_json(key, state, ttl_seconds)
 
     async def get_cached_workflow_state(self, thread_id: str) -> dict[str, Any] | None:
         return await self.get_json(self.key("workflow", thread_id, "state"))
@@ -136,3 +142,93 @@ class RedisStore:
             if isinstance(decoded, dict):
                 events.append(decoded)
         return events
+
+    async def set_active_workflow_memory(
+        self,
+        workflow_id: str,
+        memory: dict[str, Any],
+        *,
+        ttl_seconds: int = 1800,
+    ) -> None:
+        key = self.key("memory", "workflow", workflow_id, "active")
+        await self.set_json(key, memory, ttl_seconds)
+
+    async def get_active_workflow_memory(self, workflow_id: str) -> dict[str, Any] | None:
+        return await self.get_json(self.key("memory", "workflow", workflow_id, "active"))
+
+    async def set_agent_scratchpad(
+        self,
+        workflow_id: str,
+        agent_name: str,
+        scratchpad: dict[str, Any],
+        *,
+        ttl_seconds: int = 1800,
+    ) -> None:
+        await self.set_json(
+            self.key("memory", "workflow", workflow_id, "scratchpad", agent_name),
+            scratchpad,
+            ttl_seconds,
+        )
+
+    async def get_agent_scratchpad(
+        self,
+        workflow_id: str,
+        agent_name: str,
+    ) -> dict[str, Any] | None:
+        return await self.get_json(
+            self.key("memory", "workflow", workflow_id, "scratchpad", agent_name)
+        )
+
+    async def append_agent_handoff(
+        self,
+        workflow_id: str,
+        handoff: dict[str, Any],
+        *,
+        max_handoffs: int = 100,
+        ttl_seconds: int = 3600,
+    ) -> None:
+        key = self.key("memory", "workflow", workflow_id, "handoffs")
+        await self._client.rpush(key, json.dumps(handoff, separators=(",", ":")))
+        await self._client.ltrim(key, -max_handoffs, -1)
+        await self._client.expire(key, ttl_seconds)
+
+    async def get_agent_handoffs(self, workflow_id: str) -> list[dict[str, Any]]:
+        values = await self._client.lrange(
+            self.key("memory", "workflow", workflow_id, "handoffs"),
+            0,
+            -1,
+        )
+        handoffs: list[dict[str, Any]] = []
+        for value in values:
+            decoded = json.loads(value)
+            if isinstance(decoded, dict):
+                handoffs.append(decoded)
+        return handoffs
+
+    async def increment_retry_count(
+        self,
+        workflow_id: str,
+        step_name: str,
+        *,
+        ttl_seconds: int = 86400,
+    ) -> int:
+        key = self.key("memory", "workflow", workflow_id, "retry", step_name)
+        retry_count = await self._client.incr(key)
+        await self._client.expire(key, ttl_seconds)
+        return int(retry_count)
+
+    async def set_latest_critic_feedback(
+        self,
+        workflow_id: str,
+        feedback: dict[str, Any],
+        *,
+        ttl_seconds: int = 3600,
+    ) -> None:
+        await self.set_json(
+            self.key("memory", "workflow", workflow_id, "critic", "latest"),
+            feedback,
+            ttl_seconds,
+        )
+
+    async def get_latest_critic_feedback(self, workflow_id: str) -> dict[str, Any] | None:
+        return await self.get_json(self.key("memory", "workflow", workflow_id, "critic", "latest"))

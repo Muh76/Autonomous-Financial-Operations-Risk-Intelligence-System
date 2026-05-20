@@ -40,8 +40,11 @@ Current architecture components:
 - async SQLAlchemy database integration
 - async Redis integration
 - typed LangGraph investigation workflow
+- production-style parallel LangGraph workflow example
 - PostgreSQL workflow persistence models and investigation repository
-- Redis workflow state cache and resume pointer helpers
+- PostgreSQL durable workflow memory models and repository
+- Redis workflow state, resume pointer, execution event, and short-term memory helpers
+- workflow memory service for agent context assembly
 - Docker Compose for local API, PostgreSQL, and Redis
 
 ## Tech Stack
@@ -213,8 +216,11 @@ Current workflow capabilities:
 - modular typed investigation state with evidence, findings, risk, approvals, errors, and history
 - nested schemas for transaction context, compliance reviews, risk assessments, persistent memory, node results, and agent executions
 - async-ready nodes for transaction context, fraud, compliance, risk, critic, escalation, and reporting
+- fan-out/fan-in parallel execution example for fraud analysis and compliance validation
 - deterministic conditional routing for low-risk auto-close, medium-risk compliance review, high-risk escalation, evidence expansion, and failure
 - reusable retry manager with failure classification, retry exhaustion tracking, and deterministic fallback hooks
+- timeout fallback handling for parallel async branches
+- result aggregation after parallel branch completion
 - approval checkpoint state for future human-in-the-loop review
 - optional checkpointer injection for durable LangGraph persistence
 
@@ -229,8 +235,12 @@ app/core/graph/state_schemas/execution.py  # node results, retries, confidence, 
 app/core/graph/state_schemas/risk.py       # risk assessment contract
 app/core/graph/state_schemas/investigation.py # transaction, subject, compliance, memory
 app/core/graph/retry.py                    # retry manager, policies, fallback utilities
+app/core/graph/parallel_workflow.py        # parallel fan-out/fan-in workflow example
 app/models/investigations.py               # workflow run, snapshot, history, checkpoint models
 app/repositories/investigations.py         # investigation persistence repository
+app/models/memory.py                       # durable workflow memory, evidence, retry, feedback models
+app/repositories/memory.py                 # workflow memory repository
+app/services/workflow_memory.py            # Redis/PostgreSQL agent memory service
 ```
 
 Run the workflow example:
@@ -239,10 +249,53 @@ Run the workflow example:
 python examples/run_investigation_workflow.py
 ```
 
+Run the parallel workflow example:
+
+```bash
+python examples/run_parallel_investigation_workflow.py
+```
+
 The workflow uses typed state and reducer-based list updates so future nodes and agents can append evidence, findings, errors, approvals, escalations, node results, agent executions, and history without overwriting prior state.
 
 See `docs/langgraph_investigation_workflow.md` for the architecture map and production guidance.
 See `docs/workflow_persistence_architecture.md` for the persistence, checkpointing, Redis, and PostgreSQL design.
+See `docs/workflow_memory_architecture.md` for the workflow memory architecture, Redis short-term memory, PostgreSQL durable memory, and repository strategy.
+See `docs/parallel_execution_architecture.md` for scalable parallel execution, async node patterns, aggregation, and timeout handling.
+
+## Workflow Memory
+
+The workflow memory layer supports long-running multi-agent investigations with both short-term and durable memory.
+
+Redis is used for:
+
+- active workflow memory
+- agent scratchpads
+- agent handoffs
+- retry counters
+- latest critic feedback
+
+PostgreSQL is used for:
+
+- investigation and workflow summaries
+- related transaction memory
+- evidence history
+- prior escalations
+- retry history
+- critic feedback history
+
+Agents should access memory through `WorkflowMemoryService` instead of directly reading Redis or PostgreSQL. This keeps memory retrieval tenant-scoped, auditable, and easier to evolve as agent workflows become more complex.
+
+## Parallel Execution
+
+The parallel workflow demonstrates production-style AI orchestration where fraud analysis and compliance validation execute concurrently, then join at a deterministic aggregation node.
+
+Concurrency safety is handled by:
+
+- assigning disjoint scalar fields to each parallel branch
+- using reducer-backed append-only lists for shared history and observations
+- centralizing aggregate risk decisions in the join node
+- wrapping branch execution with timeout fallbacks
+- recording branch outputs, errors, and agent execution metadata
 
 ## Logging and Observability
 
@@ -278,6 +331,11 @@ Current support:
 - workflow state cache helper
 - workflow resume pointer helper
 - short-lived execution event stream helper
+- active workflow memory helper
+- agent scratchpad helper
+- agent handoff helper
+- retry counter helper
+- latest critic feedback helper
 
 Run the Redis example after starting Redis:
 
@@ -289,6 +347,7 @@ python examples/redis_usage.py
 
 Near-term backend work:
 
+- add Alembic migrations for workflow memory models
 - add Alembic migrations for investigation persistence models
 - implement repository interfaces for patients, transactions, investigations, and evaluations
 - connect services to PostgreSQL persistence
@@ -301,6 +360,8 @@ AI workflow work:
 - add LangGraph interrupt/resume support for human approval checkpoints
 - persist workflow runs and decision trails
 - introduce agent/tool interfaces for external data retrieval
+- wire workflow memory service into graph node execution boundaries
+- add critic review routing after low-confidence parallel branch fallbacks
 
 Operational work:
 
@@ -335,6 +396,7 @@ Phase 3: Risk Intelligence Workflows
 - risk scoring services
 - workflow state persistence
 - investigation memory
+- parallel fraud/compliance branch orchestration
 
 Phase 4: Multi-Agent Operations
 
@@ -343,6 +405,7 @@ Phase 4: Multi-Agent Operations
 - tool calling interfaces
 - human-in-the-loop escalation
 - traceable agent decisions
+- durable memory retrieval and feedback loops
 
 Phase 5: Production Operations
 

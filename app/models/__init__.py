@@ -7,10 +7,26 @@ from app.models.investigations import (
     WorkflowHistoryEvent,
     WorkflowSnapshot,
 )
+from app.models.memory import (
+    CriticFeedbackMemory,
+    EscalationMemory,
+    EvidenceMemoryEvent,
+    EvidenceMemoryItem,
+    InvestigationMemorySummary,
+    RelatedTransactionMemory,
+    RetryMemoryEvent,
+)
 
 __all__ = [
     "Base",
+    "CriticFeedbackMemory",
+    "EscalationMemory",
+    "EvidenceMemoryEvent",
+    "EvidenceMemoryItem",
+    "InvestigationMemorySummary",
     "InvestigationRun",
+    "RelatedTransactionMemory",
+    "RetryMemoryEvent",
     "WorkflowCheckpointRef",
     "WorkflowHistoryEvent",
     "WorkflowSnapshot",
