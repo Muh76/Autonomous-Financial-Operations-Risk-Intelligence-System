@@ -226,6 +226,8 @@ Current workflow capabilities:
 - production-style pytest architecture for deterministic LangGraph workflow validation
 - production-grade Transaction Analysis Agent for aggregation, temporal analysis, anomaly heuristics, and chain analysis
 - explainable Fraud Detection Agent with deterministic heuristics and AI-assisted narrative support
+- Financial Retrieval Agent with RAG, reranking, citations, and grounded evidence
+- Risk Scoring Agent for weighted operational risk, confidence calibration, and escalation prioritization
 - approval checkpoint state for future human-in-the-loop review
 - optional checkpointer injection for durable LangGraph persistence
 
@@ -243,6 +245,8 @@ app/core/graph/retry.py                    # retry manager, policies, fallback u
 app/core/graph/parallel_workflow.py        # parallel fan-out/fan-in workflow example
 app/core/graph/transaction_analysis_node.py # Transaction Analysis Agent node wrapper
 app/core/graph/fraud_detection_node.py     # Fraud Detection Agent node wrapper
+app/core/graph/financial_retrieval_node.py # Financial Retrieval Agent node wrapper
+app/core/graph/risk_scoring_agent_node.py  # Risk Scoring Agent node wrapper
 app/models/investigations.py               # workflow run, snapshot, history, checkpoint models
 app/repositories/investigations.py         # investigation persistence repository
 app/models/memory.py                       # durable workflow memory, evidence, retry, feedback models
@@ -252,6 +256,8 @@ app/services/approval_checkpoints.py       # approval decision and pause/resume 
 app/services/workflow_visualization.py     # dashboard and replay metadata builder
 app/services/transaction_analysis.py       # deterministic transaction analysis agent service
 app/services/fraud_detection.py            # explainable fraud scoring and evidence service
+app/services/financial_retrieval.py        # RAG retrieval, reranking, citation, grounding service
+app/services/risk_scoring.py               # weighted operational risk scoring service
 ```
 
 Run the workflow example:
@@ -277,6 +283,8 @@ See `docs/workflow_visualization_metadata.md` for graph metadata, node timing, e
 See `docs/workflow_testing_architecture.md` for pytest structure, fixtures, node isolation tests, branching tests, retry tests, and workflow integration tests.
 See `docs/transaction_analysis_agent.md` for the Transaction Analysis Agent architecture, typed outputs, pipeline, and LangGraph node wrapper.
 See `docs/fraud_detection_agent.md` for explainable fraud scoring, evidence generation, heuristics, typed outputs, and LangGraph integration.
+See `docs/financial_retrieval_agent.md` for RAG architecture, ingestion, vector retrieval, reranking, citations, grounding, and LangGraph integration.
+See `docs/risk_scoring_agent.md` for weighted scoring, confidence calibration, escalation recommendations, typed outputs, and LangGraph integration.
 
 ## Workflow Memory
 
@@ -400,6 +408,52 @@ python examples/run_fraud_detection_agent.py
 
 The agent emits a typed `FraudDetectionResult` and maps it into workflow state as `fraud_detection`, `fraud_score`, `risk_band`, `fraud_typologies`, evidence, findings, recommended actions, and agent execution metadata.
 
+## Financial Retrieval Agent
+
+The Financial Retrieval Agent provides trustworthy RAG for investigation evidence grounding.
+
+It supports:
+
+- semantic retrieval
+- deterministic embedding fallback
+- reranking
+- citation generation
+- evidence grounding
+- compliance document retrieval
+- source attribution
+- confidence scoring
+
+Supported document families include SEC filings, audit reports, compliance policies, AML guidance, and governance reports.
+
+Run the example:
+
+```bash
+python examples/run_financial_retrieval_agent.py
+```
+
+The agent emits a typed `FinancialRetrievalResponse` and maps grounded retrieval output into workflow evidence, findings, citations, and agent execution metadata.
+
+## Risk Scoring Agent
+
+The Risk Scoring Agent aggregates investigation signals into explainable operational risk.
+
+It uses weighted inputs from:
+
+- fraud signals
+- compliance violations
+- transaction anomaly scores
+- retrieval evidence and citations
+- critic feedback
+- operational context
+
+Run the example:
+
+```bash
+python examples/run_risk_scoring_agent.py
+```
+
+The agent emits a typed `OperationalRiskScore` and maps it into workflow state as `operational_risk`, `risk_assessment`, `aggregate_risk_score`, `risk_band`, `escalation_level`, findings, recommended actions, and agent execution metadata.
+
 ## Logging and Observability
 
 Structured logging is configured with `structlog`.
@@ -469,6 +523,8 @@ AI workflow work:
 - expand workflow tests with repository, Redis, and checkpointer integration coverage
 - integrate the Transaction Analysis Agent into the default investigation graph
 - integrate the Fraud Detection Agent into the default investigation graph
+- integrate the Financial Retrieval Agent before critic review and final report generation
+- integrate the Risk Scoring Agent as the default risk scoring node
 
 Operational work:
 

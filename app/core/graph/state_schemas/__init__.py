@@ -21,6 +21,15 @@ from app.core.graph.state_schemas.execution import (
     NodeResult,
     RetryState,
 )
+from app.core.graph.state_schemas.financial_retrieval import (
+    FinancialDocument,
+    FinancialDocumentChunk,
+    FinancialDocumentType,
+    FinancialRetrievalResponse,
+    RetrievalCitation,
+    RetrievalEvidence,
+    RetrievalResult,
+)
 from app.core.graph.state_schemas.fraud_detection import (
     FraudDetectionResult,
     FraudEvidence,
@@ -34,7 +43,12 @@ from app.core.graph.state_schemas.investigation import (
     SubjectProfile,
     TransactionContext,
 )
-from app.core.graph.state_schemas.risk import RiskAssessment
+from app.core.graph.state_schemas.risk import (
+    EscalationRecommendation,
+    OperationalRiskScore,
+    RiskAssessment,
+    RiskSignalScore,
+)
 from app.core.graph.state_schemas.transaction_analysis import (
     SuspiciousActivityIndicator,
     TemporalAnalysis,
@@ -67,11 +81,16 @@ __all__ = [
     "ConfidenceAssessment",
     "EscalationDecision",
     "EscalationLevel",
+    "EscalationRecommendation",
     "EscalationPathTrace",
     "EvidenceRef",
     "EvidenceType",
     "FailureClass",
     "FindingCategory",
+    "FinancialDocument",
+    "FinancialDocumentChunk",
+    "FinancialDocumentType",
+    "FinancialRetrievalResponse",
     "FraudDetectionResult",
     "FraudEvidence",
     "FraudHeuristicResult",
@@ -85,8 +104,13 @@ __all__ = [
     "NodeExecutionStatus",
     "NodeResult",
     "RetryVisualizationTrace",
+    "RetrievalCitation",
+    "RetrievalEvidence",
+    "RetrievalResult",
     "RetryState",
+    "OperationalRiskScore",
     "RiskAssessment",
+    "RiskSignalScore",
     "RiskBand",
     "SubjectProfile",
     "SuspiciousActivityIndicator",

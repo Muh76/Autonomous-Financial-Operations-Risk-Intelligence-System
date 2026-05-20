@@ -15,6 +15,7 @@ from app.core.graph.state_schemas import (
     EvidenceRef,
     EvidenceType,
     FailureClass,
+    FinancialRetrievalResponse,
     FindingCategory,
     FraudDetectionResult,
     InvestigationFinding,
@@ -23,6 +24,7 @@ from app.core.graph.state_schemas import (
     NodeError,
     NodeExecutionStatus,
     NodeResult,
+    OperationalRiskScore,
     RetryState,
     RiskAssessment,
     RiskBand,
@@ -64,8 +66,10 @@ class InvestigationState(TypedDict):
     subject: NotRequired[SubjectProfile]
     compliance_review: NotRequired[ComplianceReviewState]
     risk_assessment: NotRequired[RiskAssessment]
+    operational_risk: NotRequired[OperationalRiskScore]
     confidence_assessment: NotRequired[ConfidenceAssessment]
     persistent_memory: NotRequired[InvestigationMemory]
+    financial_retrieval: NotRequired[FinancialRetrievalResponse]
     transaction_analysis: NotRequired[TransactionAnalysisResult]
     fraud_detection: NotRequired[FraudDetectionResult]
 
@@ -122,6 +126,7 @@ __all__ = [
     "EvidenceRef",
     "EvidenceType",
     "FailureClass",
+    "FinancialRetrievalResponse",
     "FindingCategory",
     "FraudDetectionResult",
     "InvestigationFinding",
@@ -131,6 +136,7 @@ __all__ = [
     "NodeExecutionTrace",
     "NodeExecutionStatus",
     "NodeResult",
+    "OperationalRiskScore",
     "RetryState",
     "RiskAssessment",
     "RiskBand",

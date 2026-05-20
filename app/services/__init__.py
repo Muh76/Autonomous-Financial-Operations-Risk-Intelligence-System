@@ -10,9 +10,18 @@ __all__ = [
     "AgentMemoryRequest",
     "ApprovalCheckpointService",
     "ApprovalDecisionRequest",
+    "EvidenceGroundingPipeline",
+    "FinancialDocumentIngestionPipeline",
+    "FinancialRetrievalAgentService",
+    "FinancialReranker",
     "FraudDetectionPolicy",
     "FraudDetectionService",
     "FraudNarrativeProvider",
+    "HashingEmbeddingProvider",
+    "InMemoryVectorRetrievalLayer",
+    "RetrievalPolicy",
+    "RiskScoringPolicy",
+    "RiskScoringService",
     "TransactionAnalysisPolicy",
     "TransactionAnalysisService",
     "WorkflowMemoryService",
@@ -59,6 +68,45 @@ def __getattr__(name: str) -> Any:
             "FraudDetectionPolicy": FraudDetectionPolicy,
             "FraudDetectionService": FraudDetectionService,
             "FraudNarrativeProvider": FraudNarrativeProvider,
+        }
+        return values[name]
+
+    if name in {
+        "EvidenceGroundingPipeline",
+        "FinancialDocumentIngestionPipeline",
+        "FinancialRetrievalAgentService",
+        "FinancialReranker",
+        "HashingEmbeddingProvider",
+        "InMemoryVectorRetrievalLayer",
+        "RetrievalPolicy",
+    }:
+        from app.services.financial_retrieval import (
+            EvidenceGroundingPipeline,
+            FinancialDocumentIngestionPipeline,
+            FinancialRetrievalAgentService,
+            FinancialReranker,
+            HashingEmbeddingProvider,
+            InMemoryVectorRetrievalLayer,
+            RetrievalPolicy,
+        )
+
+        values = {
+            "EvidenceGroundingPipeline": EvidenceGroundingPipeline,
+            "FinancialDocumentIngestionPipeline": FinancialDocumentIngestionPipeline,
+            "FinancialRetrievalAgentService": FinancialRetrievalAgentService,
+            "FinancialReranker": FinancialReranker,
+            "HashingEmbeddingProvider": HashingEmbeddingProvider,
+            "InMemoryVectorRetrievalLayer": InMemoryVectorRetrievalLayer,
+            "RetrievalPolicy": RetrievalPolicy,
+        }
+        return values[name]
+
+    if name in {"RiskScoringPolicy", "RiskScoringService"}:
+        from app.services.risk_scoring import RiskScoringPolicy, RiskScoringService
+
+        values = {
+            "RiskScoringPolicy": RiskScoringPolicy,
+            "RiskScoringService": RiskScoringService,
         }
         return values[name]
 
