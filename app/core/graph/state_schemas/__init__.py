@@ -21,6 +21,21 @@ from app.core.graph.state_schemas.execution import (
     NodeResult,
     RetryState,
 )
+from app.core.graph.state_schemas.critic import (
+    ConfidenceCalibrationResult,
+    ContradictionResult,
+    CriticFinding,
+    CriticFindingType,
+    CriticValidationResult,
+    EvidenceVerificationResult,
+)
+from app.core.graph.state_schemas.compliance import (
+    ComplianceCitation,
+    ComplianceRecommendation,
+    ComplianceRuleCategory,
+    ComplianceRuleResult,
+    ComplianceValidationResult,
+)
 from app.core.graph.state_schemas.financial_retrieval import (
     FinancialDocument,
     FinancialDocumentChunk,
@@ -48,6 +63,13 @@ from app.core.graph.state_schemas.risk import (
     OperationalRiskScore,
     RiskAssessment,
     RiskSignalScore,
+)
+from app.core.graph.state_schemas.reporting import (
+    ExecutiveReport,
+    ReportAudience,
+    ReportCitation,
+    ReportFinding,
+    ReportSection,
 )
 from app.core.graph.state_schemas.transaction_analysis import (
     SuspiciousActivityIndicator,
@@ -77,14 +99,26 @@ __all__ = [
     "ApprovalRequest",
     "ApprovalStatus",
     "CaseStatus",
+    "ComplianceCitation",
+    "ComplianceRecommendation",
+    "ComplianceRuleCategory",
+    "ComplianceRuleResult",
     "ComplianceReviewState",
+    "ComplianceValidationResult",
     "ConfidenceAssessment",
+    "ConfidenceCalibrationResult",
+    "ContradictionResult",
+    "CriticFinding",
+    "CriticFindingType",
+    "CriticValidationResult",
     "EscalationDecision",
     "EscalationLevel",
     "EscalationRecommendation",
     "EscalationPathTrace",
     "EvidenceRef",
+    "EvidenceVerificationResult",
     "EvidenceType",
+    "ExecutiveReport",
     "FailureClass",
     "FindingCategory",
     "FinancialDocument",
@@ -112,6 +146,10 @@ __all__ = [
     "RiskAssessment",
     "RiskSignalScore",
     "RiskBand",
+    "ReportAudience",
+    "ReportCitation",
+    "ReportFinding",
+    "ReportSection",
     "SubjectProfile",
     "SuspiciousActivityIndicator",
     "TemporalAnalysis",

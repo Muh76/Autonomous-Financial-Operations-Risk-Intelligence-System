@@ -10,6 +10,11 @@ __all__ = [
     "AgentMemoryRequest",
     "ApprovalCheckpointService",
     "ApprovalDecisionRequest",
+    "ComplianceAgentService",
+    "CompliancePolicy",
+    "ComplianceRuleEngine",
+    "CriticPolicy",
+    "CriticService",
     "EvidenceGroundingPipeline",
     "FinancialDocumentIngestionPipeline",
     "FinancialRetrievalAgentService",
@@ -22,6 +27,8 @@ __all__ = [
     "RetrievalPolicy",
     "RiskScoringPolicy",
     "RiskScoringService",
+    "ExecutiveReportingService",
+    "ReportingPolicy",
     "TransactionAnalysisPolicy",
     "TransactionAnalysisService",
     "WorkflowMemoryService",
@@ -42,6 +49,29 @@ def __getattr__(name: str) -> Any:
             "ApprovalCheckpointService": ApprovalCheckpointService,
             "ApprovalDecisionRequest": ApprovalDecisionRequest,
             "latest_approval_states": latest_approval_states,
+        }
+        return values[name]
+
+    if name in {"ComplianceAgentService", "CompliancePolicy", "ComplianceRuleEngine"}:
+        from app.services.compliance import (
+            ComplianceAgentService,
+            CompliancePolicy,
+            ComplianceRuleEngine,
+        )
+
+        values = {
+            "ComplianceAgentService": ComplianceAgentService,
+            "CompliancePolicy": CompliancePolicy,
+            "ComplianceRuleEngine": ComplianceRuleEngine,
+        }
+        return values[name]
+
+    if name in {"CriticPolicy", "CriticService"}:
+        from app.services.critic import CriticPolicy, CriticService
+
+        values = {
+            "CriticPolicy": CriticPolicy,
+            "CriticService": CriticService,
         }
         return values[name]
 
@@ -107,6 +137,15 @@ def __getattr__(name: str) -> Any:
         values = {
             "RiskScoringPolicy": RiskScoringPolicy,
             "RiskScoringService": RiskScoringService,
+        }
+        return values[name]
+
+    if name in {"ExecutiveReportingService", "ReportingPolicy"}:
+        from app.services.reporting import ExecutiveReportingService, ReportingPolicy
+
+        values = {
+            "ExecutiveReportingService": ExecutiveReportingService,
+            "ReportingPolicy": ReportingPolicy,
         }
         return values[name]
 

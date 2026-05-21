@@ -8,12 +8,15 @@ from app.core.graph.state_schemas import (
     ApprovalStatus,
     CaseStatus,
     ComplianceReviewState,
+    ComplianceValidationResult,
     ConfidenceAssessment,
+    CriticValidationResult,
     EscalationDecision,
     EscalationLevel,
     EdgeTraversalTrace,
     EvidenceRef,
     EvidenceType,
+    ExecutiveReport,
     FailureClass,
     FinancialRetrievalResponse,
     FindingCategory,
@@ -65,9 +68,11 @@ class InvestigationState(TypedDict):
     transaction_history: NotRequired[list[TransactionObservation]]
     subject: NotRequired[SubjectProfile]
     compliance_review: NotRequired[ComplianceReviewState]
+    compliance_validation: NotRequired[ComplianceValidationResult]
     risk_assessment: NotRequired[RiskAssessment]
     operational_risk: NotRequired[OperationalRiskScore]
     confidence_assessment: NotRequired[ConfidenceAssessment]
+    critic_validation: NotRequired[CriticValidationResult]
     persistent_memory: NotRequired[InvestigationMemory]
     financial_retrieval: NotRequired[FinancialRetrievalResponse]
     transaction_analysis: NotRequired[TransactionAnalysisResult]
@@ -111,6 +116,7 @@ class InvestigationState(TypedDict):
 
     report_draft: NotRequired[str]
     final_report_uri: NotRequired[str]
+    executive_report: NotRequired[ExecutiveReport]
 
 
 __all__ = [
@@ -120,11 +126,14 @@ __all__ = [
     "ApprovalStatus",
     "CaseStatus",
     "ComplianceReviewState",
+    "ComplianceValidationResult",
     "ConfidenceAssessment",
+    "CriticValidationResult",
     "EscalationDecision",
     "EscalationLevel",
     "EvidenceRef",
     "EvidenceType",
+    "ExecutiveReport",
     "FailureClass",
     "FinancialRetrievalResponse",
     "FindingCategory",
