@@ -229,7 +229,9 @@ Current workflow capabilities:
 - Financial Retrieval Agent with RAG, reranking, citations, and grounded evidence
 - Risk Scoring Agent for weighted operational risk, confidence calibration, and escalation prioritization
 - Critic Agent for hallucination detection, evidence validation, contradiction analysis, and reliability scoring
+- hallucination detection framework for unsupported claims, fabricated evidence, invalid citations, retrieval mismatches, reasoning inconsistencies, and overconfident outputs
 - Compliance Agent for AML-inspired validation, KYC checks, policy thresholds, and citation-grounded reasoning
+- compliance reasoning engine architecture for policy retrieval, deterministic rules, citation grounding, escalation recommendations, and auditable compliance decisions
 - Executive Reporting Agent for citation-backed summaries, audit explanations, and escalation reporting
 - approval checkpoint state for future human-in-the-loop review
 - optional checkpointer injection for durable LangGraph persistence
@@ -296,8 +298,10 @@ See `docs/financial_retrieval_agent.md` for RAG architecture, ingestion, vector 
 See `docs/risk_scoring_agent.md` for weighted scoring, confidence calibration, escalation recommendations, typed outputs, and LangGraph integration.
 See `docs/critic_agent.md` for hallucination detection, unsupported claim analysis, citation validation, retrieval grounding checks, confidence calibration, reliability scoring, and LangGraph integration.
 See `docs/compliance_agent.md` for AML-inspired validation, KYC checks, policy thresholds, compliance reasoning, and LangGraph integration.
+See `docs/compliance_reasoning_engine.md` for the policy validation framework, deterministic rule engine, citation system, confidence scoring, escalation logic, auditability, and LangGraph integration strategy.
 See `docs/executive_reporting_agent.md` for executive reports, templates, citation formatting, audit explanations, and LangGraph integration.
 See `docs/ai_reliability_architecture.md` for the enterprise reliability control plane, critic pipeline, evidence validation, hallucination detection, contradiction analysis, confidence calibration, and workflow gating strategy.
+See `docs/hallucination_detection_framework.md` for unsupported claim heuristics, fabricated evidence checks, invalid citation detection, retrieval grounding validation, confidence mismatch scoring, and example validation outputs.
 
 ## Workflow Memory
 
