@@ -223,12 +223,14 @@ Current workflow capabilities:
 - result aggregation after parallel branch completion
 - human approval checkpoint architecture for high-risk escalation pause/resume
 - workflow visualization metadata for dashboards, timelines, and replay systems
+- AI governance layer for audit trails, workflow traceability, agent decision logging, escalation tracking, approval checkpoints, evidence traceability, and compliance audit support
 - production-style pytest architecture for deterministic LangGraph workflow validation
 - production-grade Transaction Analysis Agent for aggregation, temporal analysis, anomaly heuristics, and chain analysis
 - explainable Fraud Detection Agent with deterministic heuristics and AI-assisted narrative support
 - Financial Retrieval Agent with RAG, reranking, citations, and grounded evidence
 - Risk Scoring Agent for weighted operational risk, confidence calibration, and escalation prioritization
 - Critic Agent for hallucination detection, evidence validation, contradiction analysis, and reliability scoring
+- evidence validation system for citation verification, retrieval alignment, completeness checks, contradiction analysis, and confidence-aware support scoring
 - hallucination detection framework for unsupported claims, fabricated evidence, invalid citations, retrieval mismatches, reasoning inconsistencies, and overconfident outputs
 - Compliance Agent for AML-inspired validation, KYC checks, policy thresholds, and citation-grounded reasoning
 - compliance reasoning engine architecture for policy retrieval, deterministic rules, citation grounding, escalation recommendations, and auditable compliance decisions
@@ -291,12 +293,14 @@ See `docs/workflow_memory_architecture.md` for the workflow memory architecture,
 See `docs/parallel_execution_architecture.md` for scalable parallel execution, async node patterns, aggregation, and timeout handling.
 See `docs/human_approval_checkpoint_architecture.md` for high-risk escalation checkpoints, approval states, audit logging, and pause/resume strategy.
 See `docs/workflow_visualization_metadata.md` for graph metadata, node timing, edge traversal, retry visualization, and timeline generation.
+See `docs/ai_governance_layer.md` for audit logging, decision traceability, escalation audit records, workflow lineage tracking, evidence traceability, and compliance audit support.
 See `docs/workflow_testing_architecture.md` for pytest structure, fixtures, node isolation tests, branching tests, retry tests, and workflow integration tests.
 See `docs/transaction_analysis_agent.md` for the Transaction Analysis Agent architecture, typed outputs, pipeline, and LangGraph node wrapper.
 See `docs/fraud_detection_agent.md` for explainable fraud scoring, evidence generation, heuristics, typed outputs, and LangGraph integration.
 See `docs/financial_retrieval_agent.md` for RAG architecture, ingestion, vector retrieval, reranking, citations, grounding, and LangGraph integration.
 See `docs/risk_scoring_agent.md` for weighted scoring, confidence calibration, escalation recommendations, typed outputs, and LangGraph integration.
 See `docs/critic_agent.md` for hallucination detection, unsupported claim analysis, citation validation, retrieval grounding checks, confidence calibration, reliability scoring, and LangGraph integration.
+See `docs/evidence_validation_system.md` for citation verification, retrieval-evidence alignment, evidence completeness checks, support scoring, contradiction analysis, validation outputs, and workflow integration.
 See `docs/compliance_agent.md` for AML-inspired validation, KYC checks, policy thresholds, compliance reasoning, and LangGraph integration.
 See `docs/compliance_reasoning_engine.md` for the policy validation framework, deterministic rule engine, citation system, confidence scoring, escalation logic, auditability, and LangGraph integration strategy.
 See `docs/executive_reporting_agent.md` for executive reports, templates, citation formatting, audit explanations, and LangGraph integration.
