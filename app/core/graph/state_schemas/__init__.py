@@ -22,12 +22,16 @@ from app.core.graph.state_schemas.execution import (
     RetryState,
 )
 from app.core.graph.state_schemas.critic import (
+    CitationValidationResult,
     ConfidenceCalibrationResult,
     ContradictionResult,
     CriticFinding,
     CriticFindingType,
     CriticValidationResult,
     EvidenceVerificationResult,
+    ReasoningConsistencyResult,
+    ReliabilityScoreBreakdown,
+    RetrievalGroundingResult,
 )
 from app.core.graph.state_schemas.compliance import (
     ComplianceCitation,
@@ -105,6 +109,7 @@ __all__ = [
     "ComplianceRuleResult",
     "ComplianceReviewState",
     "ComplianceValidationResult",
+    "CitationValidationResult",
     "ConfidenceAssessment",
     "ConfidenceCalibrationResult",
     "ContradictionResult",
@@ -140,6 +145,7 @@ __all__ = [
     "RetryVisualizationTrace",
     "RetrievalCitation",
     "RetrievalEvidence",
+    "RetrievalGroundingResult",
     "RetrievalResult",
     "RetryState",
     "OperationalRiskScore",
@@ -150,6 +156,8 @@ __all__ = [
     "ReportCitation",
     "ReportFinding",
     "ReportSection",
+    "ReasoningConsistencyResult",
+    "ReliabilityScoreBreakdown",
     "SubjectProfile",
     "SuspiciousActivityIndicator",
     "TemporalAnalysis",

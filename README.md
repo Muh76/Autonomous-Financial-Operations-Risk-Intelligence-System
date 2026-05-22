@@ -294,9 +294,10 @@ See `docs/transaction_analysis_agent.md` for the Transaction Analysis Agent arch
 See `docs/fraud_detection_agent.md` for explainable fraud scoring, evidence generation, heuristics, typed outputs, and LangGraph integration.
 See `docs/financial_retrieval_agent.md` for RAG architecture, ingestion, vector retrieval, reranking, citations, grounding, and LangGraph integration.
 See `docs/risk_scoring_agent.md` for weighted scoring, confidence calibration, escalation recommendations, typed outputs, and LangGraph integration.
-See `docs/critic_agent.md` for hallucination detection, evidence verification, contradiction analysis, reliability scoring, and LangGraph integration.
+See `docs/critic_agent.md` for hallucination detection, unsupported claim analysis, citation validation, retrieval grounding checks, confidence calibration, reliability scoring, and LangGraph integration.
 See `docs/compliance_agent.md` for AML-inspired validation, KYC checks, policy thresholds, compliance reasoning, and LangGraph integration.
 See `docs/executive_reporting_agent.md` for executive reports, templates, citation formatting, audit explanations, and LangGraph integration.
+See `docs/ai_reliability_architecture.md` for the enterprise reliability control plane, critic pipeline, evidence validation, hallucination detection, contradiction analysis, confidence calibration, and workflow gating strategy.
 
 ## Workflow Memory
 
