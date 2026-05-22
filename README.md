@@ -224,6 +224,7 @@ Current workflow capabilities:
 - human approval checkpoint architecture for high-risk escalation pause/resume
 - workflow visualization metadata for dashboards, timelines, and replay systems
 - AI governance layer for audit trails, workflow traceability, agent decision logging, escalation tracking, approval checkpoints, evidence traceability, and compliance audit support
+- investigation audit trail system for immutable-style records, timestamped workflow history, agent decisions, retries, evidence retrieval, critic feedback, and replay
 - production-style pytest architecture for deterministic LangGraph workflow validation
 - production-grade Transaction Analysis Agent for aggregation, temporal analysis, anomaly heuristics, and chain analysis
 - explainable Fraud Detection Agent with deterministic heuristics and AI-assisted narrative support
@@ -294,6 +295,7 @@ See `docs/parallel_execution_architecture.md` for scalable parallel execution, a
 See `docs/human_approval_checkpoint_architecture.md` for high-risk escalation checkpoints, approval states, audit logging, and pause/resume strategy.
 See `docs/workflow_visualization_metadata.md` for graph metadata, node timing, edge traversal, retry visualization, and timeline generation.
 See `docs/ai_governance_layer.md` for audit logging, decision traceability, escalation audit records, workflow lineage tracking, evidence traceability, and compliance audit support.
+See `docs/investigation_audit_trail_system.md` for immutable-style audit records, structured event schemas, workflow replay, repository design, and LangGraph integration.
 See `docs/workflow_testing_architecture.md` for pytest structure, fixtures, node isolation tests, branching tests, retry tests, and workflow integration tests.
 See `docs/transaction_analysis_agent.md` for the Transaction Analysis Agent architecture, typed outputs, pipeline, and LangGraph node wrapper.
 See `docs/fraud_detection_agent.md` for explainable fraud scoring, evidence generation, heuristics, typed outputs, and LangGraph integration.
